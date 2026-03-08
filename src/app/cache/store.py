@@ -11,6 +11,7 @@ Provides an abstract base class and two concrete implementations:
 
 import time
 from abc import ABC, abstractmethod
+from typing import Any
 
 from ..settings import Settings
 
@@ -129,7 +130,8 @@ class RedisCacheStore(CacheStore):
         await self._client.flushdb()
 
     async def ping(self) -> bool:
-        return bool(await self._client.ping())  # type: ignore[misc]
+        client: Any = self._client
+        return bool(await client.ping())
 
     async def close(self) -> None:
         await self._client.aclose()
