@@ -176,6 +176,79 @@ Rate-limit storage selection model:
 - `APP_RATE_LIMIT_STORAGE_BACKEND=redis`: derive Redis URL from `APP_REDIS_*`
 - explicit `APP_RATE_LIMIT_STORAGE_URL`: override either selector when needed
 
+## Worker Processes
+
+The container entrypoint defaults to a single Uvicorn worker (`UVICORN_WORKERS=1`).
+This follows the official FastAPI recommendation: in orchestrated environments
+(Kubernetes, Docker Swarm, ECS) let the platform manage replication by running
+one process per container and scaling the number of container replicas instead.
+
+For single-server or Docker Compose deployments that need to utilise multiple
+CPU cores, increase the worker count explicitly:
+
+```bash
+UVICORN_WORKERS=4
+```
+
+Keep in mind:
+
+- Each worker is an independent OS process with its own memory. Total RAM
+  usage equals per-worker footprint multiplied by the number of workers.
+- In-memory rate limiting and in-memory caching are per-process. Use
+  Redis-backed storage when running more than one worker.
+- SQLite does not support concurrent writes from multiple processes. Move to
+  Postgres before using multiple workers.
+
+### Kubernetes and Similar Orchestrators
+
+When deploying to Kubernetes, Docker Swarm, or cloud container services:
+
+- Keep `UVICORN_WORKERS=1` (the default).
+- Scale horizontally by increasing the replica count at the orchestrator level.
+- Use the readiness endpoint (`/ready`) as the readiness probe so new replicas
+  only receive traffic once they are fully initialised.
+- Use the liveness endpoint (`/healthcheck`) as the liveness probe.
+- Set `terminationGracePeriodSeconds` to at least Uvicorn's graceful shutdown
+  timeout plus a small buffer.
+- Resource limits (`resources.limits.memory`) become predictable with a single
+  worker because there is no intra-container process multiplication.
+
+This approach gives the orchestrator full visibility into per-instance health,
+simplifies memory budgeting, and avoids duplicating scaling logic inside the
+container.
+
+## Proxy Headers
+
+The container entrypoint passes `--proxy-headers` to Uvicorn so that
+`X-Forwarded-For`, `X-Forwarded-Proto`, and related headers are honoured at
+the ASGI level. This is required when the app sits behind a reverse proxy or
+load balancer (Nginx, Traefik, ALB, etc.).
+
+By default Uvicorn only trusts these headers from `127.0.0.1`. In container
+networks the proxy typically reaches the app from a different IP. Set
+`UVICORN_FORWARDED_ALLOW_IPS` to the proxy's address or CIDR:
+
+```bash
+# Trust a specific proxy
+UVICORN_FORWARDED_ALLOW_IPS=10.0.0.1
+
+# Trust an entire subnet
+UVICORN_FORWARDED_ALLOW_IPS=10.0.0.0/8
+
+# Trust any source (only when the app is truly unreachable except through proxies)
+UVICORN_FORWARDED_ALLOW_IPS=*
+```
+
+This is separate from the application-level proxy trust settings
+(`APP_SECURITY_TRUSTED_PROXIES`, `APP_RATE_LIMIT_TRUSTED_PROXIES`). Both
+layers must be configured for proxy-aware features to work correctly:
+
+- **Uvicorn level** (`UVICORN_FORWARDED_ALLOW_IPS`): populates `request.client`
+  and `request.url.scheme` in the ASGI scope.
+- **Application level** (`APP_SECURITY_TRUSTED_PROXIES`,
+  `APP_RATE_LIMIT_TRUSTED_PROXIES`): controls which middleware features honour
+  forwarded headers for HSTS decisions and client IP extraction.
+
 ## Reverse Proxy And Header Trust
 
 If the app sits behind a trusted reverse proxy:

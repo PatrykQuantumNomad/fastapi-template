@@ -181,11 +181,28 @@ APP_SECURITY_TRUSTED_PROXIES=["10.0.0.0/8"]
 Only requests arriving from trusted proxies will have `X-Forwarded-Proto`
 honored for HSTS decisions.
 
+### Uvicorn-Level Proxy Trust
+
+In addition to the application-level settings above, the container entrypoint
+passes `--proxy-headers` to Uvicorn so that forwarded headers populate the ASGI
+scope (`request.client`, `request.url.scheme`). Uvicorn only trusts these
+headers from IPs listed in `UVICORN_FORWARDED_ALLOW_IPS` (default `127.0.0.1`).
+
+In container networks the reverse proxy typically reaches the app from a
+non-loopback IP. Set this variable to match the proxy address:
+
+```bash
+UVICORN_FORWARDED_ALLOW_IPS=10.0.0.0/8
+```
+
+Both the Uvicorn-level and application-level proxy trust must be configured for
+proxy-aware features (HSTS, rate-limit IP extraction) to work end-to-end.
+
 ### Validation
 
-Both proxy trust settings require an explicit non-empty allowlist when
-enabled. The settings layer rejects startup if trust is enabled without
-proxies configured.
+Both application-level proxy trust settings require an explicit non-empty
+allowlist when enabled. The settings layer rejects startup if trust is enabled
+without proxies configured.
 
 ## Rate Limiting
 

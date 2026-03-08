@@ -26,6 +26,8 @@ Use `.env.sqlite.example`, `.env.sqlite-redis.example`, or `.env.postgres-redis.
 |----------|------|---------|-------------|
 | `APP_HOST` | string | `127.0.0.1` | Server bind address |
 | `APP_PORT` | int | `8000` | Server bind port (1–65535) |
+| `UVICORN_WORKERS` | int | `1` | Number of Uvicorn worker processes. Keep at 1 for orchestrated deployments (Kubernetes, Swarm); increase for single-server setups |
+| `UVICORN_FORWARDED_ALLOW_IPS` | string | `127.0.0.1` | IPs/CIDRs allowed to set proxy headers (X-Forwarded-For, X-Forwarded-Proto). Set to the reverse proxy address or `*` when the app is only reachable through proxies |
 
 ## Logging
 

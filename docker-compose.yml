@@ -14,6 +14,7 @@ services:
       APP_RATE_LIMIT_STORAGE_BACKEND: "${APP_RATE_LIMIT_STORAGE_BACKEND:-memory}"
       RUN_DB_MIGRATIONS: "${RUN_DB_MIGRATIONS:-true}"
       UVICORN_WORKERS: "${UVICORN_WORKERS:-1}"
+    restart: unless-stopped
     ports:
       - "${APP_PORT:-8000}:8000"
     volumes:
