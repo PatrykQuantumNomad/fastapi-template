@@ -17,7 +17,7 @@ from app.settings import Settings
 # ──────────────────────────────────────────────
 
 TEST_SECRET = "super-secret-test-key-for-hs256-123"
-TEST_AUDIENCE = "fastapi-template"
+TEST_AUDIENCE = "fastapi-chassis"
 TEST_ISSUER = "https://issuer.example.com/"
 
 

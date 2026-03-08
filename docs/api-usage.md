@@ -78,7 +78,7 @@ Returns application metadata:
 
 ```json
 {
-  "app": "FastAPI Template",
+  "app": "FastAPI Chassis",
   "version": "1.0.0",
   "status": "running"
 }
@@ -97,7 +97,7 @@ To test protected endpoints locally, enable auth in your `.env`:
 ```bash
 APP_AUTH_ENABLED=true
 APP_AUTH_JWT_ISSUER=http://localhost
-APP_AUTH_JWT_AUDIENCE=fastapi-template
+APP_AUTH_JWT_AUDIENCE=fastapi-chassis
 APP_AUTH_JWT_ALGORITHMS=["HS256"]
 APP_AUTH_JWT_SECRET=local-dev-secret-replace-me-in-production
 ```
@@ -113,7 +113,7 @@ secret must match the values in your `.env`:
 TOKEN=$(uv run python -c "
 import jwt
 token = jwt.encode(
-    {'sub': 'test-user', 'iss': 'http://localhost', 'aud': 'fastapi-template',
+    {'sub': 'test-user', 'iss': 'http://localhost', 'aud': 'fastapi-chassis',
      'exp': 9999999999, 'scope': 'reports:read', 'roles': ['admin']},
     'local-dev-secret-replace-me-in-production', algorithm='HS256')
 print(token)
@@ -137,7 +137,7 @@ Response:
 {
   "subject": "test-user",
   "issuer": "http://localhost",
-  "audience": ["fastapi-template"],
+  "audience": ["fastapi-chassis"],
   "scopes": ["reports:read"],
   "roles": ["admin"]
 }
@@ -216,7 +216,7 @@ Returns:
 
 ```json
 {
-  "app": "FastAPI Template",
+  "app": "FastAPI Chassis",
   "version": "1.0.0",
   "debug": false
 }

@@ -31,7 +31,7 @@ automatically during `uv sync`.
 
 This project is a template, not a library meant for PyPI distribution. The
 packaging setup exists purely for import ergonomics. When using this template as
-a starting point, rename `fastapi-template` in `pyproject.toml` to your project
+a starting point, rename `fastapi-chassis` in `pyproject.toml` to your project
 name and continue building under `src/app/`.
 
 ## High-Level Components

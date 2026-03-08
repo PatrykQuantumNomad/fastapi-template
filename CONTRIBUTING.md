@@ -9,7 +9,7 @@
 
 ```bash
 git clone <repository-url>
-cd fastapi-template
+cd fastapi-chassis
 make install
 cp .env.sqlite.example .env
 make db-upgrade

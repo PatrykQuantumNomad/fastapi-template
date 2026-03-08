@@ -315,7 +315,7 @@ async def test_lifespan_initializes_database_resources(test_settings: Settings) 
 def test_create_app_defaultmake_settings() -> None:
     """Factory works with default settings when none are provided."""
     app = create_app(settings=Settings(metrics_enabled=False))
-    assert app.title == "FastAPI Template"
+    assert app.title == "FastAPI Chassis"
 
 
 # ──────────────────────────────────────────────
@@ -370,7 +370,7 @@ async def test_protected_route_requires_bearer_token() -> None:
         metrics_enabled=False,
         auth_enabled=True,
         auth_jwt_secret="integration-secret-key-for-hs256-123",
-        auth_jwt_audience="fastapi-template",
+        auth_jwt_audience="fastapi-chassis",
         auth_jwt_issuer="https://issuer.example.com/",
     )
     app = create_app(settings=settings)
@@ -391,7 +391,7 @@ async def test_protected_route_accepts_valid_jwt() -> None:
         metrics_enabled=False,
         auth_enabled=True,
         auth_jwt_secret="integration-secret-key-for-hs256-123",
-        auth_jwt_audience="fastapi-template",
+        auth_jwt_audience="fastapi-chassis",
         auth_jwt_issuer="https://issuer.example.com/",
     )
     app = create_app(settings=settings)
@@ -423,7 +423,7 @@ async def test_scope_and_role_guards_enforced() -> None:
         metrics_enabled=False,
         auth_enabled=True,
         auth_jwt_secret="integration-secret-key-for-hs256-123",
-        auth_jwt_audience="fastapi-template",
+        auth_jwt_audience="fastapi-chassis",
         auth_jwt_issuer="https://issuer.example.com/",
     )
     app = create_app(settings=settings)

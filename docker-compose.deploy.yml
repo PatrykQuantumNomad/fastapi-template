@@ -1,8 +1,8 @@
-name: fastapi-template-deploy
+name: fastapi-chassis-deploy
 
 services:
   app:
-    image: "${IMAGE_NAME:-ghcr.io/example/fastapi-template}:${IMAGE_TAG:-latest}"
+    image: "${IMAGE_NAME:-ghcr.io/example/fastapi-chassis}:${IMAGE_TAG:-latest}"
     env_file:
       - "${ENV_FILE:-.env}"
     environment:

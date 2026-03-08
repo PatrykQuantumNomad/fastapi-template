@@ -435,7 +435,7 @@ wheels = [
 ]
 
 [[package]]
-name = "fastapi-template"
+name = "fastapi-chassis"
 version = "1.0.0"
 source = { editable = "." }
 dependencies = [

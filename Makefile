@@ -1,4 +1,4 @@
-## FastAPI Template Makefile
+## FastAPI Chassis Makefile
 
 SHELL := /bin/bash
 .SHELLFLAGS := -eu -o pipefail -c
@@ -35,7 +35,7 @@ REQUIRED_TOOLS ?= $(UV)
 	clean
 
 help: ## Show available targets and descriptions
-	@echo "FastAPI Template - Make targets"
+	@echo "FastAPI Chassis - Make targets"
 	@echo ""
 	@awk 'BEGIN {FS = ":.*## "}; /^[a-zA-Z0-9_.-]+:.*## / {printf "  %-18s %s\n", $$1, $$2}' "$(lastword $(MAKEFILE_LIST))" | sort
 
@@ -61,7 +61,7 @@ run-prod: check-tools ## Run production server (configurable via HOST/PORT/WORKE
 
 smoke: check-tools ## Run local startup smoke test on an alternate port
 	$(MAKE) db-upgrade
-	@APP_PORT="$(SMOKE_PORT)" $(UV) run $(PYTHON) main.py >"$$(mktemp -t fastapi-template-smoke.XXXXXX.log)" 2>&1 & \
+	@APP_PORT="$(SMOKE_PORT)" $(UV) run $(PYTHON) main.py >"$$(mktemp -t fastapi-chassis-smoke.XXXXXX.log)" 2>&1 & \
 	pid=$$!; \
 	trap 'kill "$$pid" >/dev/null 2>&1 || true; wait "$$pid" >/dev/null 2>&1 || true' EXIT; \
 	for _ in $$(seq 1 30); do \
@@ -78,8 +78,8 @@ verify-stack: check-tools ## Run live stack verification for DB/auth/metrics/tra
 	$(UV) run $(PYTHON) ops/test_stack.py
 
 verify-stack-prodlike: check-tools ## Run live verification against Postgres, Redis, and JWKS
-	VERIFY_STACK_DATABASE_URL="$${VERIFY_STACK_DATABASE_URL:-postgresql+asyncpg://fastapi:fastapi@127.0.0.1:5432/fastapi_template}" \
-	VERIFY_STACK_ALEMBIC_DATABASE_URL="$${VERIFY_STACK_ALEMBIC_DATABASE_URL:-postgresql+psycopg://fastapi:fastapi@127.0.0.1:5432/fastapi_template}" \
+	VERIFY_STACK_DATABASE_URL="$${VERIFY_STACK_DATABASE_URL:-postgresql+asyncpg://fastapi:fastapi@127.0.0.1:5432/fastapi_chassis}" \
+	VERIFY_STACK_ALEMBIC_DATABASE_URL="$${VERIFY_STACK_ALEMBIC_DATABASE_URL:-postgresql+psycopg://fastapi:fastapi@127.0.0.1:5432/fastapi_chassis}" \
 	VERIFY_STACK_REDIS_URL="$${VERIFY_STACK_REDIS_URL:-redis://127.0.0.1:6379/0}" \
 	VERIFY_STACK_AUTH_MODE=jwks \
 	$(UV) run $(PYTHON) ops/test_stack.py
@@ -133,7 +133,7 @@ ci: ## Run CI-quality gate (lint + format-check + type-check + tests + coverage)
 	$(MAKE) coverage
 
 docker-build: ## Build the Docker image locally
-	IMAGE_NAME=$${IMAGE_NAME:-fastapi-template} PUSH_IMAGE=false ./ops/docker-build-image.sh
+	IMAGE_NAME=$${IMAGE_NAME:-fastapi-chassis} PUSH_IMAGE=false ./ops/docker-build-image.sh
 
 docker-push: ## Build and push the Docker image (set IMAGE_NAME and optional IMAGE_TAG)
 	PUSH_IMAGE=true ./ops/docker-build-image.sh

@@ -148,8 +148,8 @@ Integration tests for Postgres and Redis are skipped by default. To run them loc
 docker compose -f docker-compose.postgres.yml -f docker-compose.redis.yml up -d
 
 # Set environment variables
-export TEST_POSTGRES_URL="postgresql+asyncpg://app:app@localhost:5432/fastapi_template"
-export TEST_POSTGRES_ALEMBIC_URL="postgresql+psycopg://app:app@localhost:5432/fastapi_template"
+export TEST_POSTGRES_URL="postgresql+asyncpg://app:app@localhost:5432/fastapi_chassis"
+export TEST_POSTGRES_ALEMBIC_URL="postgresql+psycopg://app:app@localhost:5432/fastapi_chassis"
 export TEST_REDIS_URL="redis://localhost:6379/0"
 
 # Run integration tests

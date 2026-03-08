@@ -36,7 +36,7 @@ class Settings(BaseSettings):
 
     # Application Metadata
     app_name: str = Field(
-        default="FastAPI Template",
+        default="FastAPI Chassis",
         description="Application name used in metrics, logging, and OpenAPI docs",
     )
     app_version: str = Field(
@@ -122,7 +122,7 @@ class Settings(BaseSettings):
         description="Postgres port used when APP_DATABASE_BACKEND=postgres",
     )
     database_postgres_name: str = Field(
-        default="fastapi_template",
+        default="fastapi_chassis",
         description="Postgres database name used when APP_DATABASE_BACKEND=postgres",
     )
     database_postgres_user: str = Field(

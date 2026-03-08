@@ -37,13 +37,13 @@ class TestJWTAuthService:
         settings = make_settings(
             auth_enabled=True,
             auth_jwt_secret="super-secret-test-key-for-hs256-123",
-            auth_jwt_audience="fastapi-template",
+            auth_jwt_audience="fastapi-chassis",
             auth_jwt_issuer="https://issuer.example.com/",
         )
         token = build_test_jwt(
             subject="user-1",
             secret="super-secret-test-key-for-hs256-123",
-            audience="fastapi-template",
+            audience="fastapi-chassis",
             issuer="https://issuer.example.com/",
             scopes=["reports:read"],
             roles=["admin"],
@@ -68,7 +68,7 @@ class TestJWTAuthService:
         settings = make_settings(
             auth_enabled=True,
             auth_jwt_secret="super-secret-test-key-for-hs256-123",
-            auth_jwt_audience="fastapi-template",
+            auth_jwt_audience="fastapi-chassis",
             auth_jwt_issuer="https://issuer.example.com/",
         )
         async with httpx.AsyncClient() as client:
@@ -91,11 +91,11 @@ class TestJWTAuthService:
         settings = make_settings(
             auth_enabled=True,
             auth_jwt_secret="super-secret-test-key-for-hs256-123",
-            auth_jwt_audience="fastapi-template",
+            auth_jwt_audience="fastapi-chassis",
             auth_jwt_issuer="https://issuer.example.com/",
         )
         token = jwt.encode(
-            {"sub": "user-1", "aud": "fastapi-template", "iss": "https://issuer.example.com/"},
+            {"sub": "user-1", "aud": "fastapi-chassis", "iss": "https://issuer.example.com/"},
             settings.auth_jwt_secret,
             algorithm="HS256",
         )
@@ -110,12 +110,12 @@ class TestJWTAuthService:
         settings = make_settings(
             auth_enabled=True,
             auth_jwt_secret="super-secret-test-key-for-hs256-123",
-            auth_jwt_audience="fastapi-template",
+            auth_jwt_audience="fastapi-chassis",
             auth_jwt_issuer="https://issuer.example.com/",
             auth_require_exp=False,
         )
         token = jwt.encode(
-            {"sub": "user-1", "aud": "fastapi-template", "iss": "https://issuer.example.com/"},
+            {"sub": "user-1", "aud": "fastapi-chassis", "iss": "https://issuer.example.com/"},
             settings.auth_jwt_secret,
             algorithm="HS256",
         )
@@ -132,16 +132,16 @@ class TestJWTAuthService:
         settings = make_settings(
             auth_enabled=True,
             auth_jwt_secret=secret,
-            auth_jwt_audience="fastapi-template",
+            auth_jwt_audience="fastapi-chassis",
             auth_jwt_issuer="https://issuer.example.com/",
         )
         token = build_test_jwt(
             subject="user-1",
             secret=secret,
-            audience="fastapi-template",
+            audience="fastapi-chassis",
             issuer="https://issuer.example.com/",
         )
-        raw = jwt.decode(token, secret, algorithms=["HS256"], audience="fastapi-template")
+        raw = jwt.decode(token, secret, algorithms=["HS256"], audience="fastapi-chassis")
         raw["scp"] = "reports:read admin:write"
         raw.pop("scope", None)
         scp_token = jwt.encode(raw, secret, algorithm="HS256")
@@ -157,7 +157,7 @@ class TestJWTAuthService:
         settings = make_settings(
             auth_enabled=True,
             auth_jwt_secret="super-secret-test-key-for-hs256-123",
-            auth_jwt_audience="fastapi-template",
+            auth_jwt_audience="fastapi-chassis",
             auth_jwt_issuer="https://issuer.example.com/",
         )
         async with httpx.AsyncClient() as client:
@@ -175,7 +175,7 @@ class TestJWTAuthService:
                 "-----BEGIN PUBLIC KEY-----\nMIIBIjANBgkqh\n-----END PUBLIC KEY-----"
             ),
             auth_jwt_algorithms=["RS256"],
-            auth_jwt_audience="fastapi-template",
+            auth_jwt_audience="fastapi-chassis",
             auth_jwt_issuer="https://issuer.example.com/",
         )
         async with httpx.AsyncClient() as client:
@@ -191,7 +191,7 @@ class TestJWTAuthService:
             auth_enabled=True,
             auth_jwks_url="https://issuer.example.com/.well-known/jwks.json",
             auth_jwt_algorithms=["RS256"],
-            auth_jwt_audience="fastapi-template",
+            auth_jwt_audience="fastapi-chassis",
             auth_jwt_issuer="https://issuer.example.com/",
         )
         transport = httpx.MockTransport(lambda request: httpx.Response(status_code=503))
@@ -208,7 +208,7 @@ class TestJWTAuthService:
             auth_enabled=True,
             auth_jwks_url="https://issuer.example.com/.well-known/jwks.json",
             auth_jwt_algorithms=["RS256"],
-            auth_jwt_audience="fastapi-template",
+            auth_jwt_audience="fastapi-chassis",
             auth_jwt_issuer="https://issuer.example.com/",
         )
         transport = httpx.MockTransport(
@@ -234,7 +234,7 @@ class TestJWTAuthService:
             auth_enabled=True,
             auth_jwks_url="https://issuer.example.com/.well-known/jwks.json",
             auth_jwt_algorithms=["RS256"],
-            auth_jwt_audience="fastapi-template",
+            auth_jwt_audience="fastapi-chassis",
             auth_jwt_issuer="https://issuer.example.com/",
         )
         async with httpx.AsyncClient(transport=httpx.MockTransport(handler)) as client:
@@ -250,7 +250,7 @@ class TestJWTAuthService:
             auth_enabled=True,
             auth_jwks_url="https://issuer.example.com/.well-known/jwks.json",
             auth_jwt_algorithms=["RS256"],
-            auth_jwt_audience="fastapi-template",
+            auth_jwt_audience="fastapi-chassis",
             auth_jwt_issuer="https://issuer.example.com/",
         )
         token = jwt.encode(
@@ -269,7 +269,7 @@ class TestJWTAuthService:
             auth_enabled=True,
             auth_jwks_url="https://issuer.example.com/.well-known/jwks.json",
             auth_jwt_algorithms=["RS256"],
-            auth_jwt_audience="fastapi-template",
+            auth_jwt_audience="fastapi-chassis",
             auth_jwt_issuer="https://issuer.example.com/",
         )
         token = jwt.encode(
@@ -290,7 +290,7 @@ class TestJWTAuthService:
             auth_enabled=True,
             auth_jwks_url="https://issuer.example.com/.well-known/jwks.json",
             auth_jwt_algorithms=["RS256"],
-            auth_jwt_audience="fastapi-template",
+            auth_jwt_audience="fastapi-chassis",
             auth_jwt_issuer="https://issuer.example.com/",
         )
         token = jwt.encode(
@@ -322,7 +322,7 @@ class TestJWTAuthService:
             auth_enabled=True,
             auth_jwks_url="https://issuer.example.com/.well-known/jwks.json",
             auth_jwt_algorithms=["RS256"],
-            auth_jwt_audience="fastapi-template",
+            auth_jwt_audience="fastapi-chassis",
             auth_jwt_issuer="https://issuer.example.com/",
         )
         token = jwt.encode(
@@ -346,7 +346,7 @@ class TestJWTAuthService:
             auth_enabled=True,
             auth_jwt_public_key="public-key",
             auth_jwt_algorithms=["RS256"],
-            auth_jwt_audience="fastapi-template",
+            auth_jwt_audience="fastapi-chassis",
             auth_jwt_issuer="https://issuer.example.com/",
         )
         async with httpx.AsyncClient() as client:
@@ -358,7 +358,7 @@ class TestJWTAuthService:
         settings = make_settings(
             auth_enabled=True,
             auth_jwt_secret="super-secret-test-key-for-hs256-123",
-            auth_jwt_audience="fastapi-template",
+            auth_jwt_audience="fastapi-chassis",
             auth_jwt_issuer="https://issuer.example.com/",
         )
         async with httpx.AsyncClient() as client:
@@ -391,7 +391,7 @@ class TestJWTAuthService:
             auth_enabled=True,
             auth_jwks_url="https://issuer.example.com/.well-known/jwks.json",
             auth_jwt_algorithms=["RS256"],
-            auth_jwt_audience="fastapi-template",
+            auth_jwt_audience="fastapi-chassis",
             auth_jwt_issuer="https://issuer.example.com/",
             auth_jwks_cache_ttl_seconds=3600,
         )
@@ -408,7 +408,7 @@ class TestJWTAuthService:
             auth_enabled=True,
             auth_jwks_url="https://issuer.example.com/.well-known/jwks.json",
             auth_jwt_algorithms=["RS256"],
-            auth_jwt_audience="fastapi-template",
+            auth_jwt_audience="fastapi-chassis",
             auth_jwt_issuer="https://issuer.example.com/",
             auth_jwks_cache_ttl_seconds=5,
         )
@@ -429,7 +429,7 @@ class TestJWTAuthService:
             auth_enabled=True,
             auth_jwks_url="https://issuer.example.com/.well-known/jwks.json",
             auth_jwt_algorithms=["RS256"],
-            auth_jwt_audience="fastapi-template",
+            auth_jwt_audience="fastapi-chassis",
             auth_jwt_issuer="https://issuer.example.com/",
             auth_jwks_cache_ttl_seconds=5,
         )
@@ -460,7 +460,7 @@ class TestJWTAuthService:
                 auth_enabled=True,
                 auth_jwks_url="http://issuer.example.com/.well-known/jwks.json",
                 auth_jwt_algorithms=["RS256"],
-                auth_jwt_audience="fastapi-template",
+                auth_jwt_audience="fastapi-chassis",
                 auth_jwt_issuer="https://issuer.example.com/",
             )
 
@@ -470,7 +470,7 @@ class TestJWTAuthService:
                 auth_enabled=True,
                 auth_jwt_algorithms=["HS256", "RS256"],
                 auth_jwt_secret="super-secret-test-key-for-hs256-123",
-                auth_jwt_audience="fastapi-template",
+                auth_jwt_audience="fastapi-chassis",
                 auth_jwt_issuer="https://issuer.example.com/",
             )
 
@@ -481,7 +481,7 @@ class TestJWTAuthService:
                 auth_jwt_algorithms=["RS256"],
                 auth_jwt_secret="super-secret-test-key-for-hs256-123",
                 auth_jwt_public_key="public-key",
-                auth_jwt_audience="fastapi-template",
+                auth_jwt_audience="fastapi-chassis",
                 auth_jwt_issuer="https://issuer.example.com/",
             )
 
@@ -490,7 +490,7 @@ class TestJWTAuthService:
             make_settings(
                 auth_enabled=True,
                 auth_jwt_secret="super-secret-test-key-for-hs256-123",
-                auth_jwt_audience="fastapi-template",
+                auth_jwt_audience="fastapi-chassis",
             )
 
     def test_auth_enabled_requires_audience_by_default(self) -> None:
@@ -505,7 +505,7 @@ class TestJWTAuthService:
         settings = make_settings(
             auth_enabled=True,
             auth_jwt_secret="super-secret-test-key-for-hs256-123",
-            auth_jwt_audience="fastapi-template",
+            auth_jwt_audience="fastapi-chassis",
             auth_require_issuer=False,
         )
         assert settings.auth_jwt_issuer == ""

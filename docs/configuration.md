@@ -12,7 +12,7 @@ Use `.env.sqlite.example`, `.env.sqlite-redis.example`, or `.env.postgres-redis.
 
 | Variable | Type | Default | Description |
 |----------|------|---------|-------------|
-| `APP_APP_NAME` | string | `FastAPI Template` | Application name used in metrics, logging, and OpenAPI docs |
+| `APP_APP_NAME` | string | `FastAPI Chassis` | Application name used in metrics, logging, and OpenAPI docs |
 | `APP_APP_VERSION` | string | `1.0.0` | Semantic version |
 | `APP_APP_DESCRIPTION` | string | (see settings) | Application description for OpenAPI |
 | `APP_DEBUG` | bool | `false` | Enable debug mode (exposes detailed error responses) |
@@ -46,7 +46,7 @@ Use `.env.sqlite.example`, `.env.sqlite-redis.example`, or `.env.postgres-redis.
 | `APP_DATABASE_SQLITE_PATH` | string | `./data/app.db` | SQLite file path |
 | `APP_DATABASE_POSTGRES_HOST` | string | `postgres` | Postgres host |
 | `APP_DATABASE_POSTGRES_PORT` | int | `5432` | Postgres port |
-| `APP_DATABASE_POSTGRES_NAME` | string | `fastapi_template` | Database name |
+| `APP_DATABASE_POSTGRES_NAME` | string | `fastapi_chassis` | Database name |
 | `APP_DATABASE_POSTGRES_USER` | string | `fastapi` | Username |
 | `APP_DATABASE_POSTGRES_PASSWORD` | string | (required for postgres) | Password |
 | `APP_DATABASE_URL` | string | (derived) | Explicit async SQLAlchemy URL; overrides backend |

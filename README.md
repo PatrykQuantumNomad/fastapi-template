@@ -1,4 +1,4 @@
-# FastAPI Template
+# FastAPI Chassis
 
 Production-ready FastAPI template with an explicit app factory, SQLite-first async SQLAlchemy setup, Alembic migrations, stateless JWT validation, dependency-aware readiness checks, OpenTelemetry tracing, optional Prometheus metrics, rate limiting, and secure-by-default hardening.
 
@@ -200,13 +200,13 @@ make docker-refresh-digests
 To build and optionally push a registry image directly:
 
 ```bash
-IMAGE_NAME=ghcr.io/your-org/fastapi-template IMAGE_TAG=latest make docker-push
+IMAGE_NAME=ghcr.io/your-org/fastapi-chassis IMAGE_TAG=latest make docker-push
 ```
 
 For remote hosts that should pull a prebuilt image, use `docker-compose.deploy.yml` together with:
 
 ```bash
-IMAGE_NAME=ghcr.io/your-org/fastapi-template IMAGE_TAG=latest make docker-deploy-compose
+IMAGE_NAME=ghcr.io/your-org/fastapi-chassis IMAGE_TAG=latest make docker-deploy-compose
 ```
 
 Production-oriented deploys default `RUN_DB_MIGRATIONS=false` so migrations remain an explicit choice instead of running on every container restart. Set `RUN_DB_MIGRATIONS=true` in the target environment only when that startup behavior is intentional.
@@ -263,7 +263,7 @@ Example auth settings:
 ```bash
 APP_AUTH_ENABLED=true
 APP_AUTH_JWT_ISSUER=https://issuer.example.com/
-APP_AUTH_JWT_AUDIENCE=fastapi-template
+APP_AUTH_JWT_AUDIENCE=fastapi-chassis
 APP_AUTH_JWT_ALGORITHMS=["RS256"]
 APP_AUTH_JWKS_URL=https://issuer.example.com/.well-known/jwks.json
 ```
@@ -364,7 +364,7 @@ APP_RATE_LIMIT_STORAGE_BACKEND=memory
 APP_DATABASE_BACKEND=postgres
 APP_DATABASE_POSTGRES_HOST=postgres
 APP_DATABASE_POSTGRES_PORT=5432
-APP_DATABASE_POSTGRES_NAME=fastapi_template
+APP_DATABASE_POSTGRES_NAME=fastapi_chassis
 APP_DATABASE_POSTGRES_USER=fastapi
 APP_DATABASE_POSTGRES_PASSWORD=change-me
 APP_RATE_LIMIT_ENABLED=true

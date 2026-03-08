@@ -127,7 +127,7 @@ async def test_correlation_id_propagated_through_auth_error() -> None:
         metrics_enabled=False,
         auth_enabled=True,
         auth_jwt_secret="super-secret-test-key-for-hs256-123",
-        auth_jwt_audience="fastapi-template",
+        auth_jwt_audience="fastapi-chassis",
         auth_jwt_issuer="https://issuer.example.com/",
     )
     app = create_app(settings=settings)

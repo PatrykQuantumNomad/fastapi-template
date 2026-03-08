@@ -3,7 +3,7 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
-    image: fastapi-template:local
+    image: fastapi-chassis:local
     env_file:
       - "${ENV_FILE:-.env}"
     environment:

@@ -50,7 +50,7 @@ ENV PYTHONUNBUFFERED=1 \
     PATH="/app/.venv/bin:${PATH}" \
     PYTHONPATH="/app/src"
 
-LABEL org.opencontainers.image.title="fastapi-template" \
+LABEL org.opencontainers.image.title="fastapi-chassis" \
       org.opencontainers.image.description="Production-ready FastAPI template with Builder pattern configuration" \
       org.opencontainers.image.licenses="Apache-2.0" \
       org.opencontainers.image.source="${REPOSITORY_URL}" \

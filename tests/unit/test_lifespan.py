@@ -76,7 +76,7 @@ class TestLifespanManager:
             auth_enabled=True,
             auth_jwt_algorithms=["RS256"],
             auth_jwks_url="https://issuer.example.com/.well-known/jwks.json",
-            auth_jwt_audience="fastapi-template",
+            auth_jwt_audience="fastapi-chassis",
             auth_jwt_issuer="https://issuer.example.com/",
             metrics_enabled=False,
         )

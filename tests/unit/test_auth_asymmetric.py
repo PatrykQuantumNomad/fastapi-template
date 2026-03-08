@@ -38,7 +38,7 @@ def _build_jwt(
     algorithm: str,
     kid: str | None = None,
     subject: str = "user-1",
-    audience: str = "fastapi-template",
+    audience: str = "fastapi-chassis",
     issuer: str = "https://issuer.example.com/",
 ) -> str:
     payload = {
@@ -61,7 +61,7 @@ class TestRS256Authentication:
             auth_enabled=True,
             auth_jwt_algorithms=["RS256"],
             auth_jwt_public_key=public_pem,
-            auth_jwt_audience="fastapi-template",
+            auth_jwt_audience="fastapi-chassis",
             auth_jwt_issuer="https://issuer.example.com/",
         )
         token = _build_jwt(private_key, "RS256")
@@ -80,7 +80,7 @@ class TestRS256Authentication:
             auth_enabled=True,
             auth_jwt_algorithms=["RS256"],
             auth_jwt_public_key=public_pem,
-            auth_jwt_audience="fastapi-template",
+            auth_jwt_audience="fastapi-chassis",
             auth_jwt_issuer="https://issuer.example.com/",
         )
         token = _build_jwt(other_private_key, "RS256")
@@ -100,7 +100,7 @@ class TestES256Authentication:
             auth_enabled=True,
             auth_jwt_algorithms=["ES256"],
             auth_jwt_public_key=public_pem,
-            auth_jwt_audience="fastapi-template",
+            auth_jwt_audience="fastapi-chassis",
             auth_jwt_issuer="https://issuer.example.com/",
         )
         token = _build_jwt(private_key, "ES256")
@@ -118,7 +118,7 @@ class TestES256Authentication:
             auth_enabled=True,
             auth_jwt_algorithms=["ES256"],
             auth_jwt_public_key=public_pem,
-            auth_jwt_audience="fastapi-template",
+            auth_jwt_audience="fastapi-chassis",
             auth_jwt_issuer="https://issuer.example.com/",
         )
         token = _build_jwt(other_private_key, "ES256")
@@ -144,7 +144,7 @@ class TestJWKSKeyTypeBranching:
             auth_enabled=True,
             auth_jwks_url="https://issuer.example.com/.well-known/jwks.json",
             auth_jwt_algorithms=["RS256"],
-            auth_jwt_audience="fastapi-template",
+            auth_jwt_audience="fastapi-chassis",
             auth_jwt_issuer="https://issuer.example.com/",
         )
         token = _build_jwt(private_key, "RS256", kid="rsa-key-1")
@@ -170,7 +170,7 @@ class TestJWKSKeyTypeBranching:
             auth_enabled=True,
             auth_jwks_url="https://issuer.example.com/.well-known/jwks.json",
             auth_jwt_algorithms=["ES256"],
-            auth_jwt_audience="fastapi-template",
+            auth_jwt_audience="fastapi-chassis",
             auth_jwt_issuer="https://issuer.example.com/",
         )
         token = _build_jwt(private_key, "ES256", kid="ec-key-1")

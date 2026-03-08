@@ -81,9 +81,9 @@ jobs:
           file: Dockerfile
           push: false
           load: true
-          tags: fastapi-template:ci
-          cache-from: type=gha,scope=fastapi-template-ci
-          cache-to: type=gha,mode=max,scope=fastapi-template-ci
+          tags: fastapi-chassis:ci
+          cache-from: type=gha,scope=fastapi-chassis-ci
+          cache-to: type=gha,mode=max,scope=fastapi-chassis-ci
           build-args: |
             BUILD_DATE=${{ steps.meta.outputs.created }}
             REPOSITORY_URL=https://github.com/${{ github.repository }}
@@ -92,7 +92,7 @@ jobs:
 
       - name: Report Docker image size
         run: |
-          size_bytes="$(docker image inspect fastapi-template:ci --format '{{.Size}}')"
+          size_bytes="$(docker image inspect fastapi-chassis:ci --format '{{.Size}}')"
           size_mib="$(SIZE_BYTES="${size_bytes}" python - <<'PY'
           import os
           print(f"{int(os.environ['SIZE_BYTES']) / 1024 / 1024:.1f} MiB")
@@ -101,13 +101,13 @@ jobs:
           {
             echo "## Docker image benchmark"
             echo
-            echo "- Tag: \`fastapi-template:ci\`"
+            echo "- Tag: \`fastapi-chassis:ci\`"
             echo "- Uncompressed size: ${size_mib}"
           } >> "$GITHUB_STEP_SUMMARY"
 
       - name: Smoke test built container runtime
         run: |
-          container_name="fastapi-template-ci-smoke"
+          container_name="fastapi-chassis-ci-smoke"
           trap 'docker rm -f "${container_name}" >/dev/null 2>&1 || true' EXIT
 
           docker run -d \
@@ -117,7 +117,7 @@ jobs:
             -e APP_PORT=8000 \
             -e RUN_DB_MIGRATIONS=true \
             -e UVICORN_WORKERS=1 \
-            fastapi-template:ci
+            fastapi-chassis:ci
 
           python - <<'PY'
           import time
@@ -141,7 +141,7 @@ jobs:
       - name: Scan Docker image for vulnerabilities
         uses: aquasecurity/trivy-action@57a97c7e7821a5776cebc9bb87c984fa69cba8f1 # v0.35.0
         with:
-          image-ref: fastapi-template:ci
+          image-ref: fastapi-chassis:ci
           format: table
           exit-code: "1"
           severity: CRITICAL,HIGH
@@ -156,13 +156,13 @@ jobs:
       postgres:
         image: postgres:17-alpine
         env:
-          POSTGRES_DB: fastapi_template
+          POSTGRES_DB: fastapi_chassis
           POSTGRES_USER: fastapi
           POSTGRES_PASSWORD: fastapi
         ports:
           - 5432:5432
         options: >-
-          --health-cmd "pg_isready -U fastapi -d fastapi_template"
+          --health-cmd "pg_isready -U fastapi -d fastapi_chassis"
           --health-interval 5s
           --health-timeout 5s
           --health-retries 10
@@ -193,15 +193,15 @@ jobs:
 
       - name: Run integration tests against Postgres and Redis
         env:
-          TEST_POSTGRES_URL: postgresql+asyncpg://fastapi:fastapi@127.0.0.1:5432/fastapi_template
-          TEST_POSTGRES_ALEMBIC_URL: postgresql+psycopg://fastapi:fastapi@127.0.0.1:5432/fastapi_template
+          TEST_POSTGRES_URL: postgresql+asyncpg://fastapi:fastapi@127.0.0.1:5432/fastapi_chassis
+          TEST_POSTGRES_ALEMBIC_URL: postgresql+psycopg://fastapi:fastapi@127.0.0.1:5432/fastapi_chassis
           TEST_REDIS_URL: redis://127.0.0.1:6379/0
         run: uv run pytest tests/integration -m integration
 
       - name: Run production-like stack verification
         env:
-          VERIFY_STACK_DATABASE_URL: postgresql+asyncpg://fastapi:fastapi@127.0.0.1:5432/fastapi_template
-          VERIFY_STACK_ALEMBIC_DATABASE_URL: postgresql+psycopg://fastapi:fastapi@127.0.0.1:5432/fastapi_template
+          VERIFY_STACK_DATABASE_URL: postgresql+asyncpg://fastapi:fastapi@127.0.0.1:5432/fastapi_chassis
+          VERIFY_STACK_ALEMBIC_DATABASE_URL: postgresql+psycopg://fastapi:fastapi@127.0.0.1:5432/fastapi_chassis
           VERIFY_STACK_REDIS_URL: redis://127.0.0.1:6379/1
           VERIFY_STACK_AUTH_MODE: jwks
         run: uv run python ops/test_stack.py

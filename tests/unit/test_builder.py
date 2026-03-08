@@ -124,13 +124,13 @@ class TestFastAPIAppBuilder:
     def test_builder_default_settings(self) -> None:
         """Builder uses default settings when none are provided."""
         builder = FastAPIAppBuilder()
-        assert builder.settings.app_name == "FastAPI Template"
+        assert builder.settings.app_name == "FastAPI Chassis"
 
     def test_builder_default_logger(self) -> None:
         """Builder creates a logger when none is provided."""
         builder = FastAPIAppBuilder()
         assert builder.logger is not None
-        assert builder.logger.name == "FastAPI Template"
+        assert builder.logger.name == "FastAPI Chassis"
 
     def test_setup_methods_return_self(self, settings: Settings, logger: logging.Logger) -> None:
         """Every setup method returns the builder for chaining."""

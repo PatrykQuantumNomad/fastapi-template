@@ -1,6 +1,6 @@
 [project]
 # Distribution/package name as published to package indexes.
-name = "fastapi-template"
+name = "fastapi-chassis"
 # Initial semantic version for this template package.
 version = "1.0.0"
 # Short summary shown in package listings and metadata.

@@ -91,8 +91,8 @@ jobs:
           push: true
           load: true
           tags: ${{ steps.meta.outputs.tags }}
-          cache-from: type=gha,scope=fastapi-template-release
-          cache-to: type=gha,mode=max,scope=fastapi-template-release
+          cache-from: type=gha,scope=fastapi-chassis-release
+          cache-to: type=gha,mode=max,scope=fastapi-chassis-release
           build-args: |
             BUILD_DATE=${{ steps.buildmeta.outputs.created }}
             REPOSITORY_URL=https://github.com/${{ github.repository }}

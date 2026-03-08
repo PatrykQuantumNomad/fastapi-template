@@ -30,7 +30,7 @@ class TestSettingsDefaults:
 
     def test_default_app_name(self) -> None:
         s = make_settings(metrics_enabled=False)
-        assert s.app_name == "FastAPI Template"
+        assert s.app_name == "FastAPI Chassis"
 
     def test_default_debug_off(self) -> None:
         s = make_settings(metrics_enabled=False)
@@ -143,7 +143,7 @@ class TestSettingsValidation:
             make_settings(
                 auth_enabled=True,
                 auth_jwt_secret="super-secret-test-key-for-hs256-123",
-                auth_jwt_audience="fastapi-template",
+                auth_jwt_audience="fastapi-chassis",
                 metrics_enabled=False,
             )
 
@@ -315,7 +315,7 @@ class TestSettingsAuthEdgeCases:
                 auth_jwt_algorithms=["HS256", "RS256"],
                 auth_jwt_secret="super-secret-test-key-for-hs256-123",
                 auth_jwt_issuer="https://issuer.example.com/",
-                auth_jwt_audience="fastapi-template",
+                auth_jwt_audience="fastapi-chassis",
                 metrics_enabled=False,
             )
 
@@ -326,7 +326,7 @@ class TestSettingsAuthEdgeCases:
                 auth_jwt_algorithms=["HS256"],
                 auth_jwt_secret="too-short",
                 auth_jwt_issuer="https://issuer.example.com/",
-                auth_jwt_audience="fastapi-template",
+                auth_jwt_audience="fastapi-chassis",
                 metrics_enabled=False,
             )
 
@@ -338,7 +338,7 @@ class TestSettingsAuthEdgeCases:
                 auth_jwt_secret="super-secret-test-key-for-hs256-123",
                 auth_jwt_public_key="-----BEGIN PUBLIC KEY-----\nfake\n-----END PUBLIC KEY-----",
                 auth_jwt_issuer="https://issuer.example.com/",
-                auth_jwt_audience="fastapi-template",
+                auth_jwt_audience="fastapi-chassis",
                 metrics_enabled=False,
             )
 
@@ -350,7 +350,7 @@ class TestSettingsAuthEdgeCases:
                 auth_jwt_secret="super-secret-test-key-for-hs256-123",
                 auth_jwks_url="https://issuer.example.com/.well-known/jwks.json",
                 auth_jwt_issuer="https://issuer.example.com/",
-                auth_jwt_audience="fastapi-template",
+                auth_jwt_audience="fastapi-chassis",
                 metrics_enabled=False,
             )
 
@@ -362,7 +362,7 @@ class TestSettingsAuthEdgeCases:
                 auth_jwt_secret="super-secret-test-key-for-hs256-123",
                 auth_jwks_url="https://issuer.example.com/.well-known/jwks.json",
                 auth_jwt_issuer="https://issuer.example.com/",
-                auth_jwt_audience="fastapi-template",
+                auth_jwt_audience="fastapi-chassis",
                 metrics_enabled=False,
             )
 
@@ -372,7 +372,7 @@ class TestSettingsAuthEdgeCases:
                 auth_enabled=True,
                 auth_jwt_algorithms=["RS256"],
                 auth_jwt_issuer="https://issuer.example.com/",
-                auth_jwt_audience="fastapi-template",
+                auth_jwt_audience="fastapi-chassis",
                 metrics_enabled=False,
             )
 
@@ -381,7 +381,7 @@ class TestSettingsAuthEdgeCases:
             auth_enabled=True,
             auth_jwt_algorithms=["HS256"],
             auth_jwt_secret="super-secret-test-key-for-hs256-123",
-            auth_jwt_audience="fastapi-template",
+            auth_jwt_audience="fastapi-chassis",
             auth_require_issuer=False,
             metrics_enabled=False,
         )

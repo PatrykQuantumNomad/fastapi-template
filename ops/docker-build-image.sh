@@ -4,7 +4,7 @@ set -euo pipefail
 # Build the application image locally and optionally push the tagged result.
 # The defaults keep local usage simple while still stamping OCI metadata when
 # the build runs in CI or from a checked-out git repository.
-DEFAULT_IMAGE_NAME="${GITHUB_REPOSITORY:-fastapi-template}"
+DEFAULT_IMAGE_NAME="${GITHUB_REPOSITORY:-fastapi-chassis}"
 IMAGE_NAME="${IMAGE_NAME:-$DEFAULT_IMAGE_NAME}"
 IMAGE_NAME="${IMAGE_NAME,,}"
 IMAGE_TAG="${IMAGE_TAG:-$(git rev-parse --short HEAD 2>/dev/null || echo local)}"

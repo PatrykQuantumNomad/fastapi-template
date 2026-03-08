@@ -16,7 +16,7 @@ The starlette-exporter middleware emits standard HTTP metrics. When `APP_METRICS
 
 ### Adapting the Prefix
 
-If you change `APP_METRICS_PREFIX` (e.g. to `fastapi_template`), update your Prometheus scrape config and alert rules accordingly. For example, with `APP_METRICS_PREFIX=fastapi`:
+If you change `APP_METRICS_PREFIX` (e.g. to `fastapi_chassis`), update your Prometheus scrape config and alert rules accordingly. For example, with `APP_METRICS_PREFIX=fastapi`:
 
 - `fastapi_requests_total`
 - `fastapi_request_duration_seconds`

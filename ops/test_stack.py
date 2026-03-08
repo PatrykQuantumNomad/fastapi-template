@@ -53,7 +53,7 @@ if TYPE_CHECKING:
 REPO_ROOT = Path(__file__).resolve().parents[1]
 AUTH_SECRET = "verification-secret-0123456789abcd"
 AUTH_ISSUER = "https://verification.local/"
-AUTH_AUDIENCE = "fastapi-template-live-check"
+AUTH_AUDIENCE = "fastapi-chassis-live-check"
 HEALTH_PATH = "/healthcheck"
 READY_PATH = "/ready"
 METRICS_PATH = "/metrics"
@@ -265,7 +265,7 @@ def _build_settings(
 
     return Settings(
         _env_file=None,
-        app_name="FastAPI Template Verification",
+        app_name="FastAPI Chassis Verification",
         app_version="0.0.1-verify",
         debug=False,
         docs_enabled=False,
@@ -368,7 +368,7 @@ def _write_local_tls_certificate(temp_path: Path) -> tuple[Path, Path]:
     subject = issuer = x509.Name(
         [
             x509.NameAttribute(NameOID.COUNTRY_NAME, "US"),
-            x509.NameAttribute(NameOID.ORGANIZATION_NAME, "FastAPI Template Verification"),
+            x509.NameAttribute(NameOID.ORGANIZATION_NAME, "FastAPI Chassis Verification"),
             x509.NameAttribute(NameOID.COMMON_NAME, "127.0.0.1"),
         ]
     )
@@ -754,7 +754,7 @@ def main() -> int:
     previous_ssl_cert_file = os.environ.get("SSL_CERT_FILE")
 
     try:
-        with TemporaryDirectory(prefix="fastapi-template-verify-") as temp_dir:
+        with TemporaryDirectory(prefix="fastapi-chassis-verify-") as temp_dir:
             temp_path = Path(temp_dir)
             database_path: Path | None = None
             jwks_url: str | None = None

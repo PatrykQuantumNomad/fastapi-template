@@ -36,8 +36,8 @@ uv run python ops/test_stack.py
 Production-like mode:
 
 ```bash
-VERIFY_STACK_DATABASE_URL=postgresql+asyncpg://fastapi:fastapi@127.0.0.1:5432/fastapi_template \
-VERIFY_STACK_ALEMBIC_DATABASE_URL=postgresql+psycopg://fastapi:fastapi@127.0.0.1:5432/fastapi_template \
+VERIFY_STACK_DATABASE_URL=postgresql+asyncpg://fastapi:fastapi@127.0.0.1:5432/fastapi_chassis \
+VERIFY_STACK_ALEMBIC_DATABASE_URL=postgresql+psycopg://fastapi:fastapi@127.0.0.1:5432/fastapi_chassis \
 VERIFY_STACK_REDIS_URL=redis://127.0.0.1:6379/0 \
 VERIFY_STACK_AUTH_MODE=jwks \
 uv run python ops/test_stack.py
