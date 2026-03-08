@@ -138,6 +138,11 @@ warn_return_any = true
 # Warn on invalid/unused MyPy config options.
 warn_unused_configs = true
 
+# Ignore missing stubs for optional dependencies not installed during CI.
+[[tool.mypy.overrides]]
+module = "redis.*"
+ignore_missing_imports = true
+
 # Pytest configuration.
 [tool.pytest.ini_options]
 # Test discovery roots.
