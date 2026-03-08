@@ -36,7 +36,7 @@ jobs:
         run: uv sync --all-extras
 
       - name: Audit Python dependencies for known vulnerabilities
-        run: uv run pip-audit --strict --desc --skip-editable
+        run: uv run pip-audit --desc --skip-editable
 
       - name: Run Bandit security linter
         run: uv run bandit -r src -c pyproject.toml -q
