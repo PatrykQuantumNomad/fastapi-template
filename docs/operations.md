@@ -156,19 +156,43 @@ Database selection model:
 - `APP_DATABASE_BACKEND=custom`: use explicit `APP_DATABASE_URL` and
   `APP_ALEMBIC_DATABASE_URL`
 
-Use SQLite only when all of the following are true:
+SQLite is viable for production when properly configured:
 
-- traffic is low,
-- writes are infrequent,
-- a single process is serving traffic,
+- WAL journal mode enables concurrent readers alongside a single writer,
+- production pragmas (synchronous, busy_timeout, cache_size, foreign_keys) are
+  applied automatically on every new connection via SQLAlchemy event listeners,
+- persistent storage (Kubernetes StatefulSet with PVC, Docker volume) keeps the
+  database file durable across restarts,
+- Litestream provides continuous disaster recovery via WAL shipping to S3/GCS,
+- LiteFS provides horizontal scaling with FUSE-based distributed replication.
+
+Use SQLite when:
+
+- writes follow a single-writer pattern (one process, or LiteFS primary routing),
+- read-heavy workloads dominate,
+- operational simplicity is valued over multi-writer concurrency,
 - backup and restore of the DB file are understood by the operator.
 
-Move to Postgres or another server database before using:
+Move to Postgres or another server database when:
 
-- multiple Uvicorn workers,
-- multiple service replicas,
-- sustained concurrent write traffic,
-- managed production hosting where local container filesystem state is brittle.
+- multiple independent writers are required without LiteFS,
+- sustained high-concurrency write traffic exceeds SQLite's single-writer throughput,
+- managed production hosting where local container filesystem state is brittle
+  and replication tooling (LiteFS/Litestream) is not desired.
+
+SQLite production pragmas are configured via environment variables and applied
+automatically at engine startup:
+
+| Variable | Default | Effect |
+|----------|---------|--------|
+| `APP_DATABASE_SQLITE_JOURNAL_MODE` | `wal` | WAL enables concurrent readers with a single writer |
+| `APP_DATABASE_SQLITE_SYNCHRONOUS` | `normal` | Safe with WAL; avoids full fsync per commit |
+| `APP_DATABASE_SQLITE_BUSY_TIMEOUT` | `5000` | Milliseconds to wait on a locked database |
+| `APP_DATABASE_SQLITE_CACHE_SIZE` | `-64000` | Page cache size in KiB (negative = KiB) |
+| `APP_DATABASE_SQLITE_MMAP_SIZE` | `0` | Memory-mapped I/O size in bytes (0 = disabled) |
+| `APP_DATABASE_SQLITE_FOREIGN_KEYS` | `true` | Enforce foreign key constraints |
+
+See [`docs/configuration.md`](configuration.md) for the full database variable reference.
 
 Rate-limit storage selection model:
 

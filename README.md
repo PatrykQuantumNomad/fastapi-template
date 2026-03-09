@@ -472,6 +472,12 @@ See [`.env.example`](.env.example) for the complete set. The most important ones
 | --- | --- | --- |
 | `APP_DATABASE_BACKEND` | `sqlite` | Select `sqlite`, `postgres`, or `custom` database wiring |
 | `APP_DATABASE_SQLITE_PATH` | `./data/app.db` | SQLite file path used when `APP_DATABASE_BACKEND=sqlite` |
+| `APP_DATABASE_SQLITE_JOURNAL_MODE` | `wal` | SQLite journal mode (WAL enables concurrent readers) |
+| `APP_DATABASE_SQLITE_SYNCHRONOUS` | `normal` | SQLite synchronous setting (safe with WAL) |
+| `APP_DATABASE_SQLITE_BUSY_TIMEOUT` | `5000` | Milliseconds to wait on a locked database |
+| `APP_DATABASE_SQLITE_CACHE_SIZE` | `-64000` | Page cache size in KiB (negative = KiB, −64000 = 64 MB) |
+| `APP_DATABASE_SQLITE_MMAP_SIZE` | `0` | Memory-mapped I/O size in bytes (0 = disabled) |
+| `APP_DATABASE_SQLITE_FOREIGN_KEYS` | `true` | Enforce foreign key constraints |
 | `APP_DATABASE_URL` | derived from backend | Explicit async SQLAlchemy URL override |
 | `APP_ALEMBIC_DATABASE_URL` | derived from backend | Explicit sync Alembic URL override |
 | `APP_DOCS_ENABLED` | `false` | Expose Swagger UI at `/docs` |

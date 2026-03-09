@@ -1,0 +1,36 @@
+{{- if and (eq (include "fastapi-chassis.isSqlite" .) "true") .Values.litestream.enabled -}}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "fastapi-chassis.fullname" . }}-litestream
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "fastapi-chassis.labels" . | nindent 4 }}
+data:
+  litestream.yml: |
+    dbs:
+      - path: /app/data/app.db
+        replicas:
+          - type: {{ .Values.litestream.replica.type | default "s3" }}
+            {{- if .Values.litestream.replica.bucket }}
+            bucket: {{ .Values.litestream.replica.bucket }}
+            {{- end }}
+            {{- if .Values.litestream.replica.path }}
+            path: {{ .Values.litestream.replica.path }}
+            {{- end }}
+            {{- if .Values.litestream.replica.endpoint }}
+            endpoint: {{ .Values.litestream.replica.endpoint }}
+            {{- end }}
+            {{- if .Values.litestream.replica.region }}
+            region: {{ .Values.litestream.replica.region }}
+            {{- end }}
+            {{- if .Values.litestream.replica.url }}
+            url: {{ .Values.litestream.replica.url }}
+            {{- end }}
+            {{- if .Values.litestream.replica.retentionDuration }}
+            retention: {{ .Values.litestream.replica.retentionDuration }}
+            {{- end }}
+            {{- if .Values.litestream.replica.syncInterval }}
+            sync-interval: {{ .Values.litestream.replica.syncInterval }}
+            {{- end }}
+{{- end }}

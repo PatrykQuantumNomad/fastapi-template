@@ -1,0 +1,26 @@
+{{- if eq (include "fastapi-chassis.isSqlite" .) "true" -}}
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "fastapi-chassis.headlessServiceName" . }}
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "fastapi-chassis.labels" . | nindent 4 }}
+spec:
+  type: ClusterIP
+  clusterIP: None
+  publishNotReadyAddresses: true
+  ports:
+    - name: http
+      port: {{ include "fastapi-chassis.exposedPort" . }}
+      targetPort: http
+      protocol: TCP
+    {{- if .Values.litefs.enabled }}
+    - name: litefs
+      port: 20202
+      targetPort: litefs
+      protocol: TCP
+    {{- end }}
+  selector:
+    {{- include "fastapi-chassis.selectorLabels" . | nindent 4 }}
+{{- end }}

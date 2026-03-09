@@ -1,0 +1,604 @@
+# -- Number of replicas (ignored when autoscaling is enabled).
+# For SQLite backend, each replica has its own isolated database.
+# Use replicaCount=1 unless you have a replication layer (e.g. LiteFS).
+replicaCount: 2
+
+image:
+  # -- Container image repository
+  repository: ghcr.io/patrykquantumnomad/fastapi-chassis
+  # -- Image pull policy
+  pullPolicy: IfNotPresent
+  # -- Image tag (defaults to Chart.appVersion)
+  tag: ""
+
+# -- Image pull secrets for private registries
+imagePullSecrets: []
+# -- Override the chart name
+nameOverride: ""
+# -- Override the full release name
+fullnameOverride: ""
+
+# -- Labels applied to all resources
+commonLabels: {}
+
+# -- Annotations on the Deployment/StatefulSet resource
+deploymentAnnotations: {}
+# -- Annotations on all pods
+podAnnotations: {}
+# -- Extra labels on all pods
+podLabels: {}
+
+# -- Revision history limit for rollbacks
+revisionHistoryLimit: 3
+
+# -- Rolling update strategy (Deployment only; StatefulSet uses RollingUpdate by default)
+strategy:
+  maxSurge: 1
+  maxUnavailable: 0
+
+# -- Termination grace period (seconds). Ensure this exceeds app.requestTimeout
+# so in-flight requests can complete during shutdown.
+terminationGracePeriodSeconds: 45
+
+# =============================================================================
+# Application Configuration
+# =============================================================================
+app:
+  # -- Application display name
+  name: FastAPI Chassis
+  # -- Application version (defaults to Chart.appVersion)
+  version: ""
+  # -- Enable debug mode (never enable in production)
+  debug: false
+  # -- Container port
+  port: 8000
+  # -- Log level: DEBUG, INFO, WARNING, ERROR, CRITICAL
+  logLevel: INFO
+  # -- Log format: json (recommended for production) or text
+  logFormat: json
+  # -- Request timeout in seconds
+  requestTimeout: 30
+  # -- Number of uvicorn workers per pod
+  workers: 1
+  # -- Trusted proxy IPs for X-Forwarded-* headers.
+  # Use "*" when behind a k8s ingress controller.
+  forwardedAllowIps: "*"
+
+  # -- Liveness probe path
+  healthCheckPath: /healthcheck
+  # -- Readiness probe path
+  readinessCheckPath: /ready
+  # -- Include dependency details in readiness response
+  readinessIncludeDetails: false
+
+  # -- Expose Swagger UI (disable in production)
+  docsEnabled: false
+  # -- Expose ReDoc UI (disable in production)
+  redocEnabled: false
+  # -- Expose OpenAPI schema (disable in production)
+  openapiEnabled: false
+
+# =============================================================================
+# Database
+# =============================================================================
+# When backend=sqlite, the chart renders a StatefulSet with volumeClaimTemplates
+# to ensure stable storage identity. Each pod gets its own PVC via the VCT.
+# When backend=postgres or custom, a standard Deployment is used.
+database:
+  # -- Database backend: postgres, sqlite, or custom.
+  # SQLite deploys as a StatefulSet with persistent local storage.
+  # Postgres/custom deploy as a stateless Deployment.
+  backend: postgres
+
+  postgres:
+    # -- Postgres host
+    host: postgres
+    # -- Postgres port
+    port: 5432
+    # -- Database name
+    name: fastapi_chassis
+    # -- Database user
+    user: fastapi
+    # -- Database password (stored in Secret). For production, use existingSecret instead.
+    password: ""
+
+  sqlite:
+    # -- SQLite file path (only used when backend=sqlite)
+    path: ./data/app.db
+    # -- Journal mode. WAL enables concurrent readers + single writer.
+    journalMode: wal
+    # -- Synchronous mode. NORMAL is safe with WAL; avoids full fsync per commit.
+    synchronous: normal
+    # -- Milliseconds to wait when the database is locked before SQLITE_BUSY.
+    busyTimeout: 5000
+    # -- Page cache size. Negative = KiB (-64000 = 64 MB).
+    cacheSize: -64000
+    # -- Memory-mapped I/O size in bytes. 0 disables. 268435456 = 256 MB.
+    mmapSize: 0
+    # -- Enforce foreign key constraints (SQLite disables them by default).
+    foreignKeys: true
+
+  # -- Custom database URL (only used when backend=custom; stored in Secret)
+  url: ""
+  # -- Custom Alembic URL (only used when backend=custom; stored in Secret)
+  alembicUrl: ""
+
+  # -- Connection pool size
+  poolSize: 5
+  # -- Max overflow connections
+  maxOverflow: 10
+  # -- Ping connections before use
+  poolPrePing: true
+  # -- Connection timeout (seconds)
+  connectTimeout: 5
+  # -- Health check timeout (seconds)
+  healthTimeout: 2
+  # -- Run Alembic migrations on container startup (prefer migrations.enabled instead)
+  runMigrations: false
+
+# =============================================================================
+# SQLite StatefulSet Options (only when database.backend=sqlite)
+# =============================================================================
+sqlite:
+  # -- Pod management policy for the StatefulSet.
+  # "OrderedReady" (default) or "Parallel" for faster rollouts.
+  podManagementPolicy: OrderedReady
+
+# =============================================================================
+# Litestream - Continuous SQLite Replication to Object Storage
+# =============================================================================
+# Litestream runs as a sidecar container that continuously replicates WAL
+# changes to S3, GCS, or Azure Blob Storage. On pod startup, an init
+# container restores the database from the replica if it doesn't exist locally.
+# Only used when database.backend=sqlite.
+litestream:
+  # -- Enable Litestream sidecar for SQLite backup/restore
+  enabled: false
+
+  image:
+    # -- Litestream container image
+    repository: litestream/litestream
+    # -- Litestream image tag
+    tag: "0.3"
+
+  # -- Replica destination configuration.
+  # See https://litestream.io/reference/config/ for full options.
+  replica:
+    # -- Replica type: s3, gcs, abs, or sftp
+    type: s3
+    # -- S3/GCS bucket name
+    bucket: ""
+    # -- Path prefix within the bucket
+    path: ""
+    # -- S3-compatible endpoint URL (for MinIO, R2, Backblaze, etc.)
+    endpoint: ""
+    # -- AWS region (S3 only)
+    region: ""
+    # -- Full replica URL (alternative to individual fields).
+    # Used by the restore init container.
+    # Example: s3://my-bucket/backups/app.db
+    url: ""
+    # -- Snapshot retention duration (e.g. "720h" for 30 days)
+    retentionDuration: ""
+    # -- WAL sync interval (e.g. "1s" for near-realtime)
+    syncInterval: ""
+
+  # -- Name of an existing Secret containing Litestream credentials
+  # (e.g. LITESTREAM_ACCESS_KEY_ID, LITESTREAM_SECRET_ACCESS_KEY).
+  existingSecret: ""
+
+  # -- Extra environment variables for the Litestream containers
+  env: []
+    # - name: LITESTREAM_ACCESS_KEY_ID
+    #   valueFrom:
+    #     secretKeyRef:
+    #       name: litestream-creds
+    #       key: access-key-id
+
+  # -- Resource requests/limits for the Litestream sidecar
+  resources:
+    requests:
+      cpu: 50m
+      memory: 64Mi
+    limits:
+      memory: 128Mi
+
+# =============================================================================
+# LiteFS - Distributed SQLite Replication for High Availability
+# =============================================================================
+# LiteFS provides primary-replica replication across pods via a FUSE filesystem.
+# It includes a built-in HTTP proxy that routes writes to the primary and serves
+# reads locally, enabling true horizontal read scaling.
+# Only used when database.backend=sqlite.
+#
+# SECURITY NOTE: LiteFS requires the SYS_ADMIN Linux capability for FUSE.
+# This is a trade-off vs the default drop-all-capabilities posture.
+# The container remains non-root (UID 10001) and read-only root filesystem.
+litefs:
+  # -- Enable LiteFS distributed replication
+  enabled: false
+
+  image:
+    # -- LiteFS container image
+    repository: flyio/litefs
+    # -- LiteFS image tag
+    tag: "0.5"
+
+  # -- Built-in HTTP proxy. Routes write requests to the primary node,
+  # serves reads from the local replica. The proxy port becomes the
+  # container's exposed port (replacing the app port).
+  proxy:
+    # -- Proxy listen port (exposed via Service)
+    port: 8080
+    # -- SQLite database name within the FUSE mount
+    db: db
+    # -- URL patterns to pass through without write detection
+    passthrough: []
+      # - "*.css"
+      # - "*.js"
+      # - "/static/*"
+
+  # -- Lease configuration for primary election.
+  lease:
+    # -- Lease type: "static" (pod-0 is always primary) or "consul"
+    type: static
+
+    # -- Consul lease settings (only when type=consul)
+    consul:
+      # -- Consul HTTP address (e.g. "consul.consul:8500")
+      hostname: ""
+      # -- Consul KV key for lease
+      key: ""
+      # -- Lease TTL (e.g. "10s")
+      ttl: ""
+
+# =============================================================================
+# Database Migrations (Helm hook)
+# =============================================================================
+migrations:
+  # -- Run migrations as a pre-install/pre-upgrade Helm hook Job
+  enabled: false
+  # -- Maximum retries
+  backoffLimit: 3
+  # -- Job timeout (seconds)
+  activeDeadlineSeconds: 120
+
+# =============================================================================
+# Authentication (JWT)
+# =============================================================================
+auth:
+  # -- Enable JWT authentication
+  enabled: false
+  # -- Expected JWT issuer
+  jwtIssuer: ""
+  # -- Expected JWT audience
+  jwtAudience: ""
+  # -- Allowed JWT algorithms (JSON array string)
+  jwtAlgorithms: '["RS256"]'
+  # -- JWKS URL for key rotation (must be https://)
+  jwksUrl: ""
+  # -- JWT shared secret for HS* algorithms (stored in Secret)
+  jwtSecret: ""
+  # -- JWT public key PEM for RS*/ES*/PS* algorithms (stored in Secret)
+  jwtPublicKey: ""
+  # -- Require exp claim
+  requireExp: true
+  # -- Require issuer claim
+  requireIssuer: true
+  # -- Require audience claim
+  requireAudience: true
+  # -- JWKS cache TTL (seconds)
+  jwksCacheTtl: 300
+  # -- Clock skew tolerance (seconds)
+  clockSkew: 30
+  # -- HTTP timeout for JWKS fetch (seconds)
+  httpTimeout: 5
+
+# =============================================================================
+# Rate Limiting
+# =============================================================================
+rateLimit:
+  # -- Enable rate limiting
+  enabled: false
+  # -- Max requests per window
+  requests: 100
+  # -- Window duration (seconds)
+  windowSeconds: 60
+  # -- Key strategy: ip or authorization
+  keyStrategy: ip
+  # -- Storage backend: redis (recommended) or memory
+  storageBackend: redis
+  # -- Trust proxy headers for client IP (set true behind ingress)
+  trustProxyHeaders: true
+
+# =============================================================================
+# Cache
+# =============================================================================
+cache:
+  # -- Enable caching layer
+  enabled: false
+  # -- Cache backend: redis (recommended) or memory
+  backend: redis
+  # -- Default TTL (seconds)
+  defaultTtl: 300
+  # -- Max in-memory entries
+  maxEntries: 10000
+  # -- Redis key prefix
+  keyPrefix: "cache:"
+  # -- Redis DB index for cache
+  redisDb: 1
+
+# =============================================================================
+# Redis (shared by rate limiting and cache)
+# =============================================================================
+redis:
+  # -- Redis host
+  host: redis
+  # -- Redis port
+  port: 6379
+  # -- Redis DB index
+  db: 0
+  # -- Redis password (stored in Secret)
+  password: ""
+
+# =============================================================================
+# Prometheus Metrics
+# =============================================================================
+metrics:
+  # -- Enable Prometheus metrics endpoint (/metrics)
+  enabled: true
+  # -- Metric name prefix
+  prefix: http
+
+# =============================================================================
+# OpenTelemetry Tracing
+# =============================================================================
+tracing:
+  # -- Enable OpenTelemetry tracing
+  enabled: false
+  # -- Service name for traces
+  serviceName: ""
+  # -- Service version for traces
+  serviceVersion: ""
+  # -- Deployment environment label
+  environment: production
+  # -- OTLP HTTP endpoint
+  otlpEndpoint: http://otel-collector.observability:4318/v1/traces
+  # -- OTLP headers (comma-separated key=value)
+  otlpHeaders: ""
+
+# =============================================================================
+# Security
+# =============================================================================
+security:
+  # -- Enable security response headers
+  headersEnabled: true
+  # -- Enable HSTS
+  hstsEnabled: true
+  # -- HSTS max-age (seconds)
+  hstsMaxAge: 31536000
+  # -- Max request body size (bytes)
+  maxRequestBodyBytes: 5242880
+  # -- Trusted hosts (JSON array string). Set to your domain(s).
+  trustedHosts: ""
+
+# =============================================================================
+# CORS
+# =============================================================================
+cors:
+  # -- Allowed origins (JSON array string)
+  allowedOrigins: "[]"
+  # -- Allow credentials
+  allowCredentials: false
+
+# =============================================================================
+# Secrets
+# =============================================================================
+secret:
+  # -- Create a Secret resource for sensitive env vars
+  create: true
+
+# -- Name of an existing Secret to mount (alternative to secret.create)
+existingSecret: ""
+
+# -- Extra non-sensitive environment variables (added to ConfigMap)
+extraEnv: {}
+# -- Extra sensitive environment variables (added to Secret)
+extraSecretEnv: {}
+# -- Extra envFrom sources
+extraEnvFrom: []
+
+# =============================================================================
+# Service
+# =============================================================================
+service:
+  # -- Service type
+  type: ClusterIP
+  # -- Service port
+  port: 80
+  # -- Service annotations
+  annotations: {}
+
+# =============================================================================
+# Ingress
+# =============================================================================
+ingress:
+  # -- Enable Ingress
+  enabled: false
+  # -- Ingress class name (e.g. nginx, traefik)
+  className: ""
+  # -- Ingress annotations
+  annotations: {}
+    # nginx.ingress.kubernetes.io/ssl-redirect: "true"
+    # nginx.ingress.kubernetes.io/proxy-body-size: "5m"
+    # cert-manager.io/cluster-issuer: letsencrypt-prod
+  # -- Ingress host rules
+  hosts: []
+    # - host: api.example.com
+    #   paths:
+    #     - path: /
+    #       pathType: Prefix
+  # -- Ingress TLS configuration
+  tls: []
+    # - secretName: api-example-com-tls
+    #   hosts:
+    #     - api.example.com
+
+# =============================================================================
+# Probes
+# =============================================================================
+probes:
+  liveness:
+    initialDelaySeconds: 15
+    periodSeconds: 30
+    timeoutSeconds: 5
+    failureThreshold: 3
+  readiness:
+    initialDelaySeconds: 5
+    periodSeconds: 10
+    timeoutSeconds: 5
+    failureThreshold: 3
+  startup:
+    # -- Startup probe gives the app up to 60s (5s * 12) to start
+    initialDelaySeconds: 5
+    periodSeconds: 5
+    timeoutSeconds: 3
+    failureThreshold: 12
+
+# =============================================================================
+# Resources
+# =============================================================================
+resources:
+  requests:
+    cpu: 100m
+    memory: 256Mi
+  limits:
+    memory: 512Mi
+
+# =============================================================================
+# Autoscaling (HPA)
+# =============================================================================
+# WARNING: When database.backend=sqlite, scaling replicas creates isolated
+# databases per pod (split-brain). Only enable HPA for SQLite if you have
+# a replication layer like LiteFS, or your workload is read-only per-shard.
+autoscaling:
+  # -- Enable HorizontalPodAutoscaler
+  enabled: false
+  # -- Minimum replicas
+  minReplicas: 2
+  # -- Maximum replicas
+  maxReplicas: 10
+  # -- Target CPU utilization (%)
+  targetCPUUtilizationPercentage: 75
+  # -- Target memory utilization (%)
+  targetMemoryUtilizationPercentage: 80
+  # -- Scale-down stabilization window (seconds)
+  scaleDownStabilization: 300
+  # -- Scale-up stabilization window (seconds)
+  scaleUpStabilization: 30
+
+# =============================================================================
+# Pod Disruption Budget
+# =============================================================================
+podDisruptionBudget:
+  # -- Enable PDB (recommended when replicaCount >= 2)
+  enabled: true
+  # -- Minimum available pods (takes precedence over maxUnavailable)
+  minAvailable: 1
+  # -- Maximum unavailable pods
+  maxUnavailable: ""
+
+# =============================================================================
+# ServiceMonitor (Prometheus Operator)
+# =============================================================================
+serviceMonitor:
+  # -- Create a ServiceMonitor for Prometheus Operator
+  enabled: false
+  # -- Namespace for the ServiceMonitor (defaults to release namespace)
+  namespace: ""
+  # -- Extra labels for ServiceMonitor discovery
+  labels: {}
+  # -- Scrape interval
+  interval: 30s
+  # -- Scrape timeout
+  scrapeTimeout: 10s
+  # -- Metric relabeling configs
+  metricRelabelings: []
+  # -- Relabeling configs
+  relabelings: []
+
+# =============================================================================
+# Network Policy
+# =============================================================================
+networkPolicy:
+  # -- Enable NetworkPolicy
+  enabled: false
+  # -- Ingress source rules (e.g. allow from ingress controller namespace)
+  ingressFrom: []
+    # - namespaceSelector:
+    #     matchLabels:
+    #       kubernetes.io/metadata.name: ingress-nginx
+  # -- Database CIDR for egress (leave empty to allow any destination)
+  databaseCIDR: ""
+  # -- Redis CIDR for egress
+  redisCIDR: ""
+  # -- Extra egress rules
+  extraEgress: []
+
+# =============================================================================
+# Persistence (SQLite StatefulSet volumeClaimTemplate settings)
+# =============================================================================
+# When database.backend=sqlite, the StatefulSet provisions a PVC per pod
+# via volumeClaimTemplates. These settings control that PVC.
+persistence:
+  # -- Storage class for the SQLite data volume.
+  # Use high-performance block storage (e.g. gp3, pd-ssd, local-path).
+  # Leave empty for cluster default.
+  storageClass: ""
+  # -- Access mode. Must be ReadWriteOnce — never use RWX with SQLite.
+  accessMode: ReadWriteOnce
+  # -- Volume size
+  size: 10Gi
+
+# =============================================================================
+# Service Account
+# =============================================================================
+serviceAccount:
+  # -- Create a ServiceAccount
+  create: true
+  # -- ServiceAccount annotations (e.g. for IAM roles / IRSA for Litestream S3 access)
+  annotations: {}
+  # -- ServiceAccount name (defaults to fullname)
+  name: ""
+  # -- Automount API credentials
+  automount: false
+
+# =============================================================================
+# Scheduling
+# =============================================================================
+
+# -- Node selector
+nodeSelector: {}
+
+# -- Tolerations
+tolerations: []
+
+# -- Pod affinity/anti-affinity rules
+affinity: {}
+
+# -- Topology spread constraints for zone-aware scheduling
+topologySpreadConstraints: []
+  # - maxSkew: 1
+  #   topologyKey: topology.kubernetes.io/zone
+  #   whenUnsatisfiable: DoNotSchedule
+  #   labelSelector:
+  #     matchLabels: (auto-populated by selectorLabels)
+
+# =============================================================================
+# Extra Volumes
+# =============================================================================
+
+# -- Extra volumes to add to the pod
+extraVolumes: []
+# -- Extra volume mounts for the container
+extraVolumeMounts: []

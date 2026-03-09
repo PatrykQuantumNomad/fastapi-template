@@ -1,0 +1,18 @@
+{{- if .Values.podDisruptionBudget.enabled -}}
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: {{ include "fastapi-chassis.fullname" . }}
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "fastapi-chassis.labels" . | nindent 4 }}
+spec:
+  {{- if .Values.podDisruptionBudget.minAvailable }}
+  minAvailable: {{ .Values.podDisruptionBudget.minAvailable }}
+  {{- else }}
+  maxUnavailable: {{ .Values.podDisruptionBudget.maxUnavailable | default 1 }}
+  {{- end }}
+  selector:
+    matchLabels:
+      {{- include "fastapi-chassis.selectorLabels" . | nindent 6 }}
+{{- end }}

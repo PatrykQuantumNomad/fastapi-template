@@ -19,6 +19,12 @@ PORT ?= 8000
 WORKERS ?= 4
 SMOKE_PORT ?= 18081
 
+# Helm configuration
+HELM_CHART_DIR ?= chart
+HELM_RELEASE_NAME ?= fastapi-chassis
+HELM_NAMESPACE ?= default
+KIND_CLUSTER_NAME ?= fastapi-chassis-test
+
 # Common command arguments
 COV_PATH ?= src/app
 TEST_ARGS ?=
@@ -32,12 +38,13 @@ REQUIRED_TOOLS ?= $(UV)
 	lint lint-fix format format-check type-check \
 	check ci \
 	docker-build docker-push docker-up docker-up-sqlite-redis docker-up-postgres docker-up-prodlike docker-down docker-deploy-image docker-deploy-compose docker-refresh-digests \
+	helm-lint helm-template helm-docs helm-package helm-test helm-test-kind \
 	clean
 
 help: ## Show available targets and descriptions
 	@echo "FastAPI Chassis - Make targets"
 	@echo ""
-	@awk 'BEGIN {FS = ":.*## "}; /^[a-zA-Z0-9_.-]+:.*## / {printf "  %-18s %s\n", $$1, $$2}' "$(lastword $(MAKEFILE_LIST))" | sort
+	@awk 'BEGIN {FS = ":.*## "}; /^[a-zA-Z0-9_.-]+:.*## / {printf "  %-26s %s\n", $$1, $$2}' "$(lastword $(MAKEFILE_LIST))" | sort
 
 check-tools: ## Verify required tools are installed (default: uv)
 	@for tool in $(REQUIRED_TOOLS); do \
@@ -161,6 +168,27 @@ docker-deploy-compose: ## Deploy a published image with docker compose
 
 docker-refresh-digests: ## Refresh pinned Docker base-image digests in Dockerfile
 	./ops/refresh-docker-base-digests.sh
+
+helm-lint: ## Lint the Helm chart
+	helm lint $(HELM_CHART_DIR)
+
+helm-template: ## Render chart templates locally (dry-run)
+	helm template $(HELM_RELEASE_NAME) $(HELM_CHART_DIR)
+
+helm-docs: ## Generate Helm chart documentation (requires helm-docs)
+	helm-docs --chart-search-root $(HELM_CHART_DIR) --output-file README.md
+
+helm-package: ## Package the Helm chart into a .tgz archive
+	helm package $(HELM_CHART_DIR)
+
+helm-test: ## Run Helm tests against a deployed release
+	helm test $(HELM_RELEASE_NAME) -n $(HELM_NAMESPACE) --timeout 120s --logs
+
+helm-test-kind: ## Deploy and test the chart in a local KIND cluster
+	KIND_CLUSTER_NAME=$(KIND_CLUSTER_NAME) \
+	HELM_RELEASE_NAME=$(HELM_RELEASE_NAME) \
+	HELM_NAMESPACE=$(HELM_NAMESPACE) \
+	./ops/test_helm.sh
 
 clean: ## Remove local caches and test artifacts
 	rm -rf .pytest_cache .mypy_cache .ruff_cache .coverage htmlcov coverage.xml

@@ -59,6 +59,12 @@ Use `.env.sqlite.example`, `.env.sqlite-redis.example`, or `.env.postgres-redis.
 | `APP_DATABASE_POOL_PRE_PING` | bool | `true` | Ping connections before use |
 | `APP_DATABASE_CONNECT_TIMEOUT_SECONDS` | int | `5` | Connect timeout |
 | `APP_DATABASE_HEALTH_TIMEOUT_SECONDS` | int | `2` | Readiness ping timeout |
+| `APP_DATABASE_SQLITE_JOURNAL_MODE` | string | `wal` | SQLite journal mode (`wal`, `delete`, `truncate`, `persist`, `memory`, `off`). WAL is required for concurrent readers with a single writer |
+| `APP_DATABASE_SQLITE_SYNCHRONOUS` | string | `normal` | SQLite synchronous setting (`off`, `normal`, `full`, `extra`). NORMAL is safe with WAL and avoids full fsync per commit |
+| `APP_DATABASE_SQLITE_BUSY_TIMEOUT` | int | `5000` | Milliseconds to wait when the database is locked before returning SQLITE_BUSY (0–60000) |
+| `APP_DATABASE_SQLITE_CACHE_SIZE` | int | `-64000` | SQLite page cache size. Negative values are in KiB (−64000 = 64 MB) |
+| `APP_DATABASE_SQLITE_MMAP_SIZE` | int | `0` | Memory-mapped I/O size in bytes. 0 disables mmap |
+| `APP_DATABASE_SQLITE_FOREIGN_KEYS` | bool | `true` | Enforce foreign key constraints. SQLite disables them by default |
 
 ## Authentication (JWT)
 

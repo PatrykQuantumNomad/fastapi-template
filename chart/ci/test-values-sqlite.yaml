@@ -1,0 +1,80 @@
+# CI test values: SQLite backend with minimal configuration.
+# Used by ops/test_helm.sh for KIND cluster testing.
+
+replicaCount: 1
+
+image:
+  repository: fastapi-chassis
+  pullPolicy: Never
+  tag: test
+
+app:
+  name: fastapi-chassis-test
+  debug: false
+  logLevel: INFO
+  logFormat: json
+  docsEnabled: false
+  redocEnabled: false
+  openapiEnabled: false
+
+database:
+  backend: sqlite
+  runMigrations: true
+  sqlite:
+    path: ./data/app.db
+    journalMode: wal
+    synchronous: normal
+    busyTimeout: 5000
+    cacheSize: -64000
+    mmapSize: 0
+    foreignKeys: true
+
+auth:
+  enabled: false
+
+rateLimit:
+  enabled: false
+
+cache:
+  enabled: false
+
+metrics:
+  enabled: true
+
+tracing:
+  enabled: false
+
+secret:
+  create: false
+
+persistence:
+  accessMode: ReadWriteOnce
+  size: 1Gi
+
+resources:
+  requests:
+    cpu: 100m
+    memory: 128Mi
+  limits:
+    memory: 256Mi
+
+autoscaling:
+  enabled: false
+
+serviceMonitor:
+  enabled: false
+
+networkPolicy:
+  enabled: false
+
+probes:
+  startup:
+    initialDelaySeconds: 2
+    periodSeconds: 3
+    failureThreshold: 20
+  liveness:
+    initialDelaySeconds: 5
+    periodSeconds: 10
+  readiness:
+    initialDelaySeconds: 2
+    periodSeconds: 5

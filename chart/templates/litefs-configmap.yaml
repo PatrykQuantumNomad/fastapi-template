@@ -1,0 +1,48 @@
+{{- if and (eq (include "fastapi-chassis.isSqlite" .) "true") .Values.litefs.enabled -}}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "fastapi-chassis.fullname" . }}-litefs
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "fastapi-chassis.labels" . | nindent 4 }}
+data:
+  litefs.yml: |
+    fuse:
+      dir: "/litefs"
+      allow-other: true
+
+    data:
+      dir: "/app/data/litefs"
+
+    proxy:
+      addr: ":{{ .Values.litefs.proxy.port | default 8080 }}"
+      target: "localhost:{{ include "fastapi-chassis.containerPort" . }}"
+      db: "{{ .Values.litefs.proxy.db | default "db" }}"
+      {{- if .Values.litefs.proxy.passthrough }}
+      passthrough:
+        {{- range .Values.litefs.proxy.passthrough }}
+        - {{ . | quote }}
+        {{- end }}
+      {{- end }}
+
+    lease:
+      type: {{ .Values.litefs.lease.type | default "static" | quote }}
+      {{- if eq (.Values.litefs.lease.type | default "static") "static" }}
+      hostname: "{{ include "fastapi-chassis.fullname" . }}-0"
+      advertise-url: "http://{{ include "fastapi-chassis.fullname" . }}-0.{{ include "fastapi-chassis.headlessServiceName" . }}.{{ .Release.Namespace }}.svc.cluster.local:20202"
+      {{- else if eq .Values.litefs.lease.type "consul" }}
+      hostname: {{ .Values.litefs.lease.consul.hostname | quote }}
+      advertise-url: "http://${HOSTNAME}.{{ include "fastapi-chassis.headlessServiceName" . }}.{{ .Release.Namespace }}.svc.cluster.local:20202"
+      {{- if .Values.litefs.lease.consul.key }}
+      key: {{ .Values.litefs.lease.consul.key | quote }}
+      {{- end }}
+      {{- if .Values.litefs.lease.consul.ttl }}
+      ttl: {{ .Values.litefs.lease.consul.ttl | quote }}
+      {{- end }}
+      {{- end }}
+      candidate: true
+
+    exec:
+      - cmd: "/app/ops/docker-entrypoint.sh"
+{{- end }}

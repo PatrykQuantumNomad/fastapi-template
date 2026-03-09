@@ -157,10 +157,18 @@ The template is SQLite-first for local development:
 - runtime URL defaults to `sqlite+aiosqlite:///./data/app.db`,
 - Alembic URL defaults to `sqlite:///./data/app.db`.
 
-For production, SQLite is appropriate only for low-write or single-process
-deployments. Multi-worker or write-heavy environments should move to Postgres
-or another server database and set both `APP_DATABASE_URL` and
-`APP_ALEMBIC_DATABASE_URL` explicitly.
+When the database backend is SQLite, the engine automatically applies
+production pragmas (WAL journal mode, synchronous, busy_timeout, cache_size,
+mmap_size, foreign_keys) on every new connection via a SQLAlchemy `connect`
+event listener. These pragmas are configured through `APP_DATABASE_SQLITE_*`
+environment variables and ensure safe concurrent-reader behavior and durable
+writes without manual PRAGMA statements in application code.
+
+For production, SQLite works well for read-heavy or single-writer workloads
+when paired with persistent storage and proper pragma configuration. Multi-writer
+or high-concurrency write environments should move to Postgres or another
+server database and set both `APP_DATABASE_URL` and `APP_ALEMBIC_DATABASE_URL`
+explicitly.
 
 ## Readiness Model
 

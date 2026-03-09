@@ -1,0 +1,79 @@
+# CI test values: Postgres backend with in-cluster Postgres.
+# Used by ops/test_helm.sh for KIND cluster testing.
+# Requires a Postgres instance deployed separately in the cluster.
+
+replicaCount: 1
+
+image:
+  repository: fastapi-chassis
+  pullPolicy: Never
+  tag: test
+
+app:
+  name: fastapi-chassis-test
+  debug: false
+  logLevel: INFO
+  logFormat: json
+  docsEnabled: false
+  redocEnabled: false
+  openapiEnabled: false
+
+database:
+  backend: postgres
+  runMigrations: true
+  postgres:
+    host: postgres
+    port: 5432
+    name: fastapi_chassis
+    user: fastapi
+    password: testpassword
+
+auth:
+  enabled: false
+
+rateLimit:
+  enabled: false
+
+cache:
+  enabled: false
+
+metrics:
+  enabled: true
+
+tracing:
+  enabled: false
+
+secret:
+  create: true
+
+persistence:
+  accessMode: ReadWriteOnce
+  size: 1Gi
+
+resources:
+  requests:
+    cpu: 100m
+    memory: 128Mi
+  limits:
+    memory: 256Mi
+
+autoscaling:
+  enabled: false
+
+serviceMonitor:
+  enabled: false
+
+networkPolicy:
+  enabled: false
+
+probes:
+  startup:
+    initialDelaySeconds: 5
+    periodSeconds: 3
+    failureThreshold: 20
+  liveness:
+    initialDelaySeconds: 10
+    periodSeconds: 10
+  readiness:
+    initialDelaySeconds: 5
+    periodSeconds: 5

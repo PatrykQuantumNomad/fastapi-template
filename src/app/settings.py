@@ -174,6 +174,48 @@ class Settings(BaseSettings):
         description="Maximum time allowed for the readiness ping against the configured database",
     )
 
+    # SQLite production pragmas (only applied when database_backend=sqlite)
+    database_sqlite_journal_mode: str = Field(
+        default="wal",
+        pattern="^(wal|delete|truncate|persist|memory|off)$",
+        description=(
+            "SQLite journal mode. WAL is required for concurrent readers with a single writer."
+        ),
+    )
+    database_sqlite_synchronous: str = Field(
+        default="normal",
+        pattern="^(off|normal|full|extra)$",
+        description=(
+            "SQLite synchronous setting. NORMAL is safe with WAL and avoids full fsync per commit."
+        ),
+    )
+    database_sqlite_busy_timeout: int = Field(
+        default=5000,
+        ge=0,
+        le=60000,
+        description=(
+            "Milliseconds to wait when the database is locked before returning SQLITE_BUSY."
+        ),
+    )
+    database_sqlite_cache_size: int = Field(
+        default=-64000,
+        description=(
+            "SQLite page cache size. Negative values are in KiB (-64000 = 64 MB). "
+            "Positive values are in pages."
+        ),
+    )
+    database_sqlite_mmap_size: int = Field(
+        default=0,
+        ge=0,
+        description=(
+            "Memory-mapped I/O size in bytes. 0 disables mmap. Set to e.g. 268435456 for 256 MB."
+        ),
+    )
+    database_sqlite_foreign_keys: bool = Field(
+        default=True,
+        description="Enforce foreign key constraints. SQLite disables them by default.",
+    )
+
     # Stateless JWT resource-server auth
     auth_enabled: bool = Field(
         default=False,

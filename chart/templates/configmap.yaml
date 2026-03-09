@@ -1,0 +1,144 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "fastapi-chassis.fullname" . }}
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "fastapi-chassis.labels" . | nindent 4 }}
+data:
+  # --- Application ---
+  APP_APP_NAME: {{ .Values.app.name | quote }}
+  APP_APP_VERSION: {{ .Values.app.version | default .Chart.AppVersion | quote }}
+  APP_DEBUG: {{ .Values.app.debug | default false | quote }}
+  APP_HOST: "0.0.0.0"
+  APP_PORT: {{ include "fastapi-chassis.containerPort" . | quote }}
+  APP_LOG_LEVEL: {{ .Values.app.logLevel | default "INFO" | quote }}
+  APP_LOG_FORMAT: {{ .Values.app.logFormat | default "json" | quote }}
+  APP_REQUEST_TIMEOUT: {{ .Values.app.requestTimeout | default 30 | quote }}
+
+  # --- Health ---
+  APP_HEALTH_CHECK_PATH: {{ .Values.app.healthCheckPath | default "/healthcheck" | quote }}
+  APP_READINESS_CHECK_PATH: {{ .Values.app.readinessCheckPath | default "/ready" | quote }}
+  APP_READINESS_INCLUDE_DETAILS: {{ .Values.app.readinessIncludeDetails | default false | quote }}
+
+  # --- Database ---
+  APP_DATABASE_BACKEND: {{ .Values.database.backend | default "postgres" | quote }}
+  {{- if eq (.Values.database.backend | default "postgres") "postgres" }}
+  APP_DATABASE_POSTGRES_HOST: {{ .Values.database.postgres.host | quote }}
+  APP_DATABASE_POSTGRES_PORT: {{ .Values.database.postgres.port | default 5432 | quote }}
+  APP_DATABASE_POSTGRES_NAME: {{ .Values.database.postgres.name | quote }}
+  APP_DATABASE_POSTGRES_USER: {{ .Values.database.postgres.user | quote }}
+  {{- end }}
+  {{- if eq (.Values.database.backend | default "postgres") "sqlite" }}
+  {{- if .Values.litefs.enabled }}
+  APP_DATABASE_SQLITE_PATH: {{ printf "/litefs/%s" (.Values.litefs.proxy.db | default "db") | quote }}
+  {{- else }}
+  APP_DATABASE_SQLITE_PATH: {{ .Values.database.sqlite.path | default "./data/app.db" | quote }}
+  {{- end }}
+  APP_DATABASE_SQLITE_JOURNAL_MODE: {{ .Values.database.sqlite.journalMode | default "wal" | quote }}
+  APP_DATABASE_SQLITE_SYNCHRONOUS: {{ .Values.database.sqlite.synchronous | default "normal" | quote }}
+  APP_DATABASE_SQLITE_BUSY_TIMEOUT: {{ .Values.database.sqlite.busyTimeout | default 5000 | quote }}
+  APP_DATABASE_SQLITE_CACHE_SIZE: {{ .Values.database.sqlite.cacheSize | default -64000 | quote }}
+  APP_DATABASE_SQLITE_MMAP_SIZE: {{ .Values.database.sqlite.mmapSize | default 0 | quote }}
+  APP_DATABASE_SQLITE_FOREIGN_KEYS: {{ .Values.database.sqlite.foreignKeys | default true | quote }}
+  {{- end }}
+  APP_DATABASE_POOL_SIZE: {{ .Values.database.poolSize | default 5 | quote }}
+  APP_DATABASE_MAX_OVERFLOW: {{ .Values.database.maxOverflow | default 10 | quote }}
+  APP_DATABASE_POOL_PRE_PING: {{ .Values.database.poolPrePing | default true | quote }}
+  APP_DATABASE_CONNECT_TIMEOUT_SECONDS: {{ .Values.database.connectTimeout | default 5 | quote }}
+  APP_DATABASE_HEALTH_TIMEOUT_SECONDS: {{ .Values.database.healthTimeout | default 2 | quote }}
+
+  # --- Migrations ---
+  RUN_DB_MIGRATIONS: {{ .Values.database.runMigrations | default false | quote }}
+
+  # --- Uvicorn ---
+  UVICORN_WORKERS: {{ .Values.app.workers | default 1 | quote }}
+  UVICORN_FORWARDED_ALLOW_IPS: {{ .Values.app.forwardedAllowIps | default "*" | quote }}
+
+  # --- Auth ---
+  APP_AUTH_ENABLED: {{ .Values.auth.enabled | default false | quote }}
+  {{- if .Values.auth.enabled }}
+  APP_AUTH_JWT_ISSUER: {{ .Values.auth.jwtIssuer | default "" | quote }}
+  APP_AUTH_JWT_AUDIENCE: {{ .Values.auth.jwtAudience | default "" | quote }}
+  APP_AUTH_JWT_ALGORITHMS: {{ .Values.auth.jwtAlgorithms | default "[\"RS256\"]" | quote }}
+  {{- if .Values.auth.jwksUrl }}
+  APP_AUTH_JWKS_URL: {{ .Values.auth.jwksUrl | quote }}
+  {{- end }}
+  APP_AUTH_REQUIRE_EXP: {{ .Values.auth.requireExp | default true | quote }}
+  APP_AUTH_REQUIRE_ISSUER: {{ .Values.auth.requireIssuer | default true | quote }}
+  APP_AUTH_REQUIRE_AUDIENCE: {{ .Values.auth.requireAudience | default true | quote }}
+  APP_AUTH_JWKS_CACHE_TTL_SECONDS: {{ .Values.auth.jwksCacheTtl | default 300 | quote }}
+  APP_AUTH_CLOCK_SKEW_SECONDS: {{ .Values.auth.clockSkew | default 30 | quote }}
+  APP_AUTH_HTTP_TIMEOUT_SECONDS: {{ .Values.auth.httpTimeout | default 5 | quote }}
+  {{- end }}
+
+  # --- Rate Limiting ---
+  APP_RATE_LIMIT_ENABLED: {{ .Values.rateLimit.enabled | default false | quote }}
+  {{- if .Values.rateLimit.enabled }}
+  APP_RATE_LIMIT_REQUESTS: {{ .Values.rateLimit.requests | default 100 | quote }}
+  APP_RATE_LIMIT_WINDOW_SECONDS: {{ .Values.rateLimit.windowSeconds | default 60 | quote }}
+  APP_RATE_LIMIT_KEY_STRATEGY: {{ .Values.rateLimit.keyStrategy | default "ip" | quote }}
+  APP_RATE_LIMIT_STORAGE_BACKEND: {{ .Values.rateLimit.storageBackend | default "redis" | quote }}
+  APP_RATE_LIMIT_TRUST_PROXY_HEADERS: {{ .Values.rateLimit.trustProxyHeaders | default true | quote }}
+  {{- end }}
+
+  # --- Cache ---
+  APP_CACHE_ENABLED: {{ .Values.cache.enabled | default false | quote }}
+  {{- if .Values.cache.enabled }}
+  APP_CACHE_BACKEND: {{ .Values.cache.backend | default "redis" | quote }}
+  APP_CACHE_DEFAULT_TTL_SECONDS: {{ .Values.cache.defaultTtl | default 300 | quote }}
+  APP_CACHE_MAX_ENTRIES: {{ .Values.cache.maxEntries | default 10000 | quote }}
+  APP_CACHE_KEY_PREFIX: {{ .Values.cache.keyPrefix | default "cache:" | quote }}
+  APP_CACHE_REDIS_DB: {{ .Values.cache.redisDb | default 1 | quote }}
+  {{- end }}
+
+  # --- Redis (shared) ---
+  {{- if or .Values.rateLimit.enabled .Values.cache.enabled }}
+  APP_REDIS_HOST: {{ .Values.redis.host | quote }}
+  APP_REDIS_PORT: {{ .Values.redis.port | default 6379 | quote }}
+  APP_REDIS_DB: {{ .Values.redis.db | default 0 | quote }}
+  {{- end }}
+
+  # --- Metrics ---
+  APP_METRICS_ENABLED: {{ .Values.metrics.enabled | default true | quote }}
+  APP_METRICS_PREFIX: {{ .Values.metrics.prefix | default "http" | quote }}
+
+  # --- Tracing ---
+  APP_OTEL_ENABLED: {{ .Values.tracing.enabled | default false | quote }}
+  {{- if .Values.tracing.enabled }}
+  APP_OTEL_SERVICE_NAME: {{ .Values.tracing.serviceName | default .Values.app.name | quote }}
+  APP_OTEL_SERVICE_VERSION: {{ .Values.tracing.serviceVersion | default .Chart.AppVersion | quote }}
+  APP_OTEL_ENVIRONMENT: {{ .Values.tracing.environment | default "production" | quote }}
+  APP_OTEL_EXPORTER_OTLP_ENDPOINT: {{ .Values.tracing.otlpEndpoint | quote }}
+  {{- if .Values.tracing.otlpHeaders }}
+  APP_OTEL_EXPORTER_OTLP_HEADERS: {{ .Values.tracing.otlpHeaders | quote }}
+  {{- end }}
+  {{- end }}
+
+  # --- Security ---
+  APP_SECURITY_HEADERS_ENABLED: {{ .Values.security.headersEnabled | default true | quote }}
+  APP_SECURITY_HSTS_ENABLED: {{ .Values.security.hstsEnabled | default true | quote }}
+  APP_SECURITY_HSTS_MAX_AGE_SECONDS: {{ .Values.security.hstsMaxAge | default 31536000 | quote }}
+  APP_MAX_REQUEST_BODY_BYTES: {{ .Values.security.maxRequestBodyBytes | default 5242880 | quote }}
+
+  # --- CORS ---
+  {{- if .Values.cors }}
+  APP_CORS_ALLOWED_ORIGINS: {{ .Values.cors.allowedOrigins | default "[]" | quote }}
+  APP_CORS_ALLOW_CREDENTIALS: {{ .Values.cors.allowCredentials | default false | quote }}
+  {{- end }}
+
+  # --- Trusted Hosts ---
+  {{- if .Values.security.trustedHosts }}
+  APP_TRUSTED_HOSTS: {{ .Values.security.trustedHosts | quote }}
+  {{- end }}
+
+  # --- Docs (disabled in production by default) ---
+  APP_DOCS_ENABLED: {{ .Values.app.docsEnabled | default false | quote }}
+  APP_REDOC_ENABLED: {{ .Values.app.redocEnabled | default false | quote }}
+  APP_OPENAPI_ENABLED: {{ .Values.app.openapiEnabled | default false | quote }}
+
+  {{- with .Values.extraEnv }}
+  {{- range $key, $value := . }}
+  {{ $key }}: {{ $value | quote }}
+  {{- end }}
+  {{- end }}
