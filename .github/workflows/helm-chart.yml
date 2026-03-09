@@ -217,7 +217,8 @@ jobs:
 
       - name: Push chart to GHCR
         run: |
-          REGISTRY="oci://ghcr.io/${{ github.repository_owner }}/charts"
+          OWNER="${{ github.repository_owner }}"
+          REGISTRY="oci://ghcr.io/${OWNER,,}/charts"
           PACKAGE="fastapi-chassis-${{ steps.version.outputs.chart_version }}.tgz"
 
           helm push "$PACKAGE" "$REGISTRY"
@@ -226,7 +227,8 @@ jobs:
 
       - name: Report to summary
         run: |
-          REGISTRY="ghcr.io/${{ github.repository_owner }}/charts/fastapi-chassis"
+          OWNER="${{ github.repository_owner }}"
+          REGISTRY="ghcr.io/${OWNER,,}/charts/fastapi-chassis"
           VERSION="${{ steps.version.outputs.chart_version }}"
           {
             echo "## Helm Chart Published"
