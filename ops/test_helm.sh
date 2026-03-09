@@ -14,6 +14,7 @@
 #   HELM_VALUES_FILE    — values override file  (default: chart/ci/test-values-sqlite.yaml)
 #   IMAGE_NAME          — Docker image name     (default: fastapi-chassis)
 #   IMAGE_TAG           — Docker image tag      (default: test)
+#   KIND_NODE_IMAGE     — KIND node image       (default: kindest/node:v1.35.0)
 #   KEEP_CLUSTER        — set to "true" to skip cluster teardown for debugging
 #   TEST_TIMEOUT        — helm test timeout     (default: 120s)
 #   WAIT_TIMEOUT        — pod readiness timeout (default: 180s)
@@ -28,6 +29,7 @@ HELM_NAMESPACE="${HELM_NAMESPACE:-default}"
 HELM_VALUES_FILE="${HELM_VALUES_FILE:-chart/ci/test-values-sqlite.yaml}"
 IMAGE_NAME="${IMAGE_NAME:-fastapi-chassis}"
 IMAGE_TAG="${IMAGE_TAG:-test}"
+KIND_NODE_IMAGE="${KIND_NODE_IMAGE:-kindest/node:v1.35.0}"
 KEEP_CLUSTER="${KEEP_CLUSTER:-false}"
 TEST_TIMEOUT="${TEST_TIMEOUT:-120s}"
 WAIT_TIMEOUT="${WAIT_TIMEOUT:-180s}"
@@ -123,7 +125,7 @@ if kind get clusters 2>/dev/null | grep -q "^${KIND_CLUSTER_NAME}$"; then
 fi
 
 log "Creating KIND cluster '${KIND_CLUSTER_NAME}'..."
-kind create cluster --name "$KIND_CLUSTER_NAME" --wait 60s
+kind create cluster --name "$KIND_CLUSTER_NAME" --image "$KIND_NODE_IMAGE" --wait 60s
 ok "KIND cluster created."
 
 # --- Load image into KIND -----------------------------------------------------

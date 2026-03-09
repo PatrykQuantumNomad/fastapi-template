@@ -147,6 +147,28 @@ jobs:
           severity: CRITICAL,HIGH
           ignore-unfixed: true
 
+  helm-lint:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+
+      - name: Lint chart (default values)
+        run: helm lint chart/
+
+      - name: Lint chart (SQLite CI values)
+        run: helm lint chart/ -f chart/ci/test-values-sqlite.yaml
+
+      - name: Lint chart (Postgres CI values)
+        run: helm lint chart/ -f chart/ci/test-values-postgres.yaml
+
+      - name: Render templates (dry-run)
+        run: helm template test-release chart/ > /dev/null
+
   prodlike-stack:
     runs-on: ubuntu-latest
     timeout-minutes: 20

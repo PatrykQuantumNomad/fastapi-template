@@ -1,0 +1,246 @@
+name: Helm Chart
+
+on:
+  push:
+    branches:
+      - main
+    tags:
+      - "v*"
+    paths:
+      - "chart/**"
+      - ".github/workflows/helm-chart.yml"
+  pull_request:
+    paths:
+      - "chart/**"
+      - ".github/workflows/helm-chart.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  packages: write
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+env:
+  CHART_DIR: chart
+  KIND_VERSION: v0.31.0
+  KIND_NODE_IMAGE: kindest/node:v1.35.0@sha256:452d707d4862f52530247495d180205e029056831160e22870e37e3f6c1ac31f
+
+jobs:
+  # ---------------------------------------------------------------------------
+  # Lint — validate chart structure and templates
+  # ---------------------------------------------------------------------------
+  lint:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+
+      - name: Lint chart
+        run: helm lint ${{ env.CHART_DIR }}
+
+      - name: Lint chart with SQLite CI values
+        run: helm lint ${{ env.CHART_DIR }} -f ${{ env.CHART_DIR }}/ci/test-values-sqlite.yaml
+
+      - name: Lint chart with Postgres CI values
+        run: helm lint ${{ env.CHART_DIR }} -f ${{ env.CHART_DIR }}/ci/test-values-postgres.yaml
+
+      - name: Render templates (dry-run)
+        run: |
+          helm template test-release ${{ env.CHART_DIR }} \
+            -f ${{ env.CHART_DIR }}/ci/test-values-sqlite.yaml \
+            --debug > /dev/null
+
+  # ---------------------------------------------------------------------------
+  # Test — deploy into a KIND cluster and run helm test
+  # ---------------------------------------------------------------------------
+  test:
+    needs: lint
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    permissions:
+      contents: read
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+
+      - name: Install KIND
+        run: |
+          curl -Lo ./kind "https://kind.sigs.k8s.io/dl/${{ env.KIND_VERSION }}/kind-linux-amd64"
+          chmod +x ./kind
+          sudo mv ./kind /usr/local/bin/kind
+          kind version
+
+      - name: Build Docker image
+        run: |
+          docker build -t fastapi-chassis:test \
+            --build-arg BUILD_DATE="$(date -u +%Y-%m-%dT%H:%M:%SZ)" \
+            --build-arg VCS_REF="${GITHUB_SHA}" \
+            --build-arg VERSION="test" \
+            .
+
+      - name: Create KIND cluster
+        run: |
+          kind create cluster \
+            --name helm-test \
+            --image "${{ env.KIND_NODE_IMAGE }}" \
+            --wait 60s
+
+      - name: Load image into KIND
+        run: kind load docker-image fastapi-chassis:test --name helm-test
+
+      - name: Install Helm release
+        run: |
+          helm install fastapi-chassis ${{ env.CHART_DIR }} \
+            --namespace default \
+            -f ${{ env.CHART_DIR }}/ci/test-values-sqlite.yaml \
+            --wait \
+            --timeout 180s
+
+      - name: Verify pod readiness
+        run: |
+          kubectl rollout status statefulset/fastapi-chassis \
+            --timeout=120s 2>/dev/null || true
+          kubectl get pods -l app.kubernetes.io/instance=fastapi-chassis
+          echo ""
+          RUNNING=$(kubectl get pods \
+            -l app.kubernetes.io/instance=fastapi-chassis \
+            --field-selector=status.phase=Running \
+            -o name | wc -l)
+          if [ "$RUNNING" -lt 1 ]; then
+            echo "::error::No running pods found"
+            kubectl describe pods -l app.kubernetes.io/instance=fastapi-chassis
+            exit 1
+          fi
+          echo "Running pods: $RUNNING"
+
+      - name: Run Helm tests
+        run: helm test fastapi-chassis --timeout 120s --logs
+
+      - name: Port-forward and verify endpoints
+        run: |
+          APP_POD=$(kubectl get pods \
+            -l app.kubernetes.io/instance=fastapi-chassis \
+            --field-selector=status.phase=Running \
+            -o jsonpath='{.items[0].metadata.name}')
+
+          kubectl port-forward "pod/$APP_POD" 18090:8000 &
+          PF_PID=$!
+          sleep 3
+
+          for path in /healthcheck /ready /; do
+            code=$(curl -s -o /dev/null -w '%{http_code}' --max-time 10 \
+              "http://127.0.0.1:18090${path}" || echo "000")
+            if [ "$code" = "200" ]; then
+              echo "  ${path} → ${code} OK"
+            else
+              echo "::error::${path} returned ${code}"
+              kill "$PF_PID" 2>/dev/null || true
+              exit 1
+            fi
+          done
+
+          kill "$PF_PID" 2>/dev/null || true
+
+      - name: Collect diagnostics on failure
+        if: failure()
+        run: |
+          echo "--- Pod status ---"
+          kubectl get pods
+          echo ""
+          echo "--- Pod describe ---"
+          kubectl describe pods -l app.kubernetes.io/instance=fastapi-chassis
+          echo ""
+          echo "--- App logs ---"
+          kubectl logs -l app.kubernetes.io/instance=fastapi-chassis --tail=100
+          echo ""
+          echo "--- Events ---"
+          kubectl get events --sort-by=.lastTimestamp | tail -40
+
+      - name: Delete KIND cluster
+        if: always()
+        run: kind delete cluster --name helm-test
+
+  # ---------------------------------------------------------------------------
+  # Package and push — publish the chart to GHCR as an OCI artifact
+  # ---------------------------------------------------------------------------
+  package-and-push:
+    needs: test
+    if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags/v'))
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+      packages: write
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+
+      - name: Determine chart version
+        id: version
+        run: |
+          CHART_VERSION=$(grep '^version:' ${{ env.CHART_DIR }}/Chart.yaml | awk '{print $2}')
+          APP_VERSION=$(grep '^appVersion:' ${{ env.CHART_DIR }}/Chart.yaml | sed 's/appVersion: *"\{0,1\}\([^"]*\)"\{0,1\}/\1/')
+
+          if [[ "$GITHUB_REF" == refs/tags/v* ]]; then
+            # Strip the v prefix from the tag
+            TAG_VERSION="${GITHUB_REF#refs/tags/v}"
+            CHART_VERSION="$TAG_VERSION"
+            APP_VERSION="$TAG_VERSION"
+          fi
+
+          echo "chart_version=${CHART_VERSION}" >> "$GITHUB_OUTPUT"
+          echo "app_version=${APP_VERSION}" >> "$GITHUB_OUTPUT"
+          echo "Chart version: ${CHART_VERSION}"
+          echo "App version:   ${APP_VERSION}"
+
+      - name: Log in to GitHub Container Registry
+        run: |
+          echo "${{ secrets.GITHUB_TOKEN }}" | \
+            helm registry login ghcr.io \
+              --username "${{ github.actor }}" \
+              --password-stdin
+
+      - name: Package Helm chart
+        run: |
+          helm package ${{ env.CHART_DIR }} \
+            --version "${{ steps.version.outputs.chart_version }}" \
+            --app-version "${{ steps.version.outputs.app_version }}"
+
+      - name: Push chart to GHCR
+        run: |
+          REGISTRY="oci://ghcr.io/${{ github.repository_owner }}/charts"
+          PACKAGE="fastapi-chassis-${{ steps.version.outputs.chart_version }}.tgz"
+
+          helm push "$PACKAGE" "$REGISTRY"
+
+          echo "Pushed: ${REGISTRY}/fastapi-chassis:${{ steps.version.outputs.chart_version }}"
+
+      - name: Report to summary
+        run: |
+          REGISTRY="ghcr.io/${{ github.repository_owner }}/charts/fastapi-chassis"
+          VERSION="${{ steps.version.outputs.chart_version }}"
+          {
+            echo "## Helm Chart Published"
+            echo ""
+            echo "| Field | Value |"
+            echo "|-------|-------|"
+            echo "| **Chart** | \`fastapi-chassis\` |"
+            echo "| **Version** | \`${VERSION}\` |"
+            echo "| **App Version** | \`${{ steps.version.outputs.app_version }}\` |"
+            echo "| **Registry** | \`${REGISTRY}\` |"
+            echo ""
+            echo "### Install"
+            echo ""
+            echo "\`\`\`bash"
+            echo "helm install fastapi-chassis oci://${REGISTRY} --version ${VERSION}"
+            echo "\`\`\`"
+          } >> "$GITHUB_STEP_SUMMARY"
