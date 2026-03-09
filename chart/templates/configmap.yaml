@@ -118,8 +118,8 @@ data:
   # --- Security ---
   APP_SECURITY_HEADERS_ENABLED: {{ .Values.security.headersEnabled | default true | quote }}
   APP_SECURITY_HSTS_ENABLED: {{ .Values.security.hstsEnabled | default true | quote }}
-  APP_SECURITY_HSTS_MAX_AGE_SECONDS: {{ .Values.security.hstsMaxAge | default 31536000 | quote }}
-  APP_MAX_REQUEST_BODY_BYTES: {{ .Values.security.maxRequestBodyBytes | default 5242880 | quote }}
+  APP_SECURITY_HSTS_MAX_AGE_SECONDS: {{ .Values.security.hstsMaxAge | default 31536000 | int64 | quote }}
+  APP_MAX_REQUEST_BODY_BYTES: {{ .Values.security.maxRequestBodyBytes | default 5242880 | int64 | quote }}
 
   # --- CORS ---
   {{- if .Values.cors }}

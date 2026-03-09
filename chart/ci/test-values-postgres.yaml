@@ -44,6 +44,9 @@ metrics:
 tracing:
   enabled: false
 
+security:
+  trustedHosts: '["*"]'
+
 secret:
   create: true
 
